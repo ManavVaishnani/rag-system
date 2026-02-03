@@ -52,7 +52,7 @@ export const config = {
   },
   gemini: {
     apiKey: env.GEMINI_API_KEY,
-    embeddingModel: 'gemini-embedding-001',
+    embeddingModel: 'text-embedding-004',
     llmModel: 'gemini-2.5-flash',
   },
   qdrant: {

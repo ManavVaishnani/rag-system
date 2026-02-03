@@ -1,29 +1,32 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
 export class EmbeddingService {
-  private genAI: GoogleGenerativeAI;
+  private client: GoogleGenAI;
   private model: string;
 
   constructor() {
-    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    this.client = new GoogleGenAI({ apiKey: config.gemini.apiKey });
     this.model = config.gemini.embeddingModel;
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const embeddingModel = this.genAI.getGenerativeModel({ model: this.model });
-      const result = await embeddingModel.embedContent(text);
+      const result = await this.client.models.embedContent({
+        model: this.model,
+        contents: [text],
+      });
 
-      if (!result.embedding || !result.embedding.values) {
+      if (!result.embeddings || result.embeddings.length === 0) {
         throw new Error('No embedding returned from Gemini');
       }
 
-      return result.embedding.values;
+      return result.embeddings[0].values!;
     } catch (error) {
-      logger.error('Embedding generation failed:', error);
-      throw new Error('Failed to generate embedding');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Embedding generation failed: ${errorMessage}`, error);
+      throw new Error(`Failed to generate embedding: ${errorMessage}`);
     }
   }
 

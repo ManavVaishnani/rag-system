@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
@@ -9,11 +9,11 @@ interface StreamOptions {
 }
 
 export class LLMService {
-  private genAI: GoogleGenerativeAI;
+  private client: GoogleGenAI;
   private model: string;
 
   constructor() {
-    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    this.client = new GoogleGenAI({ apiKey: config.gemini.apiKey });
     this.model = config.gemini.llmModel;
   }
 
@@ -24,12 +24,13 @@ export class LLMService {
   ): Promise<void> {
     try {
       const prompt = this.buildPrompt(query, context);
-      const model = this.genAI.getGenerativeModel({ model: this.model });
+      const responses = await this.client.models.generateContentStream({
+        model: this.model,
+        contents: prompt,
+      });
 
-      const result = await model.generateContentStream(prompt);
-
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
+      for await (const chunk of responses) {
+        const text = chunk.text;
         if (text) {
           options.onChunk(text);
         }
@@ -45,12 +46,17 @@ export class LLMService {
   async generateResponse(query: string, context: string[]): Promise<string> {
     try {
       const prompt = this.buildPrompt(query, context);
-      const model = this.genAI.getGenerativeModel({ model: this.model });
+      const result = await this.client.models.generateContent({
+        model: this.model,
+        contents: prompt,
+      });
 
-      const result = await model.generateContent(prompt);
-      const response = result.response;
+      const response = result.text;
+      if (!response) {
+        throw new Error('No response generated from Gemini');
+      }
 
-      return response.text();
+      return response;
     } catch (error) {
       logger.error('LLM generation failed:', error);
       throw new Error('Failed to generate response');

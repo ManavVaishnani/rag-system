@@ -36,10 +36,10 @@ export class ChunkingService {
       }
 
       // Move forward with overlap
+      if (chunkEnd >= cleanedText.length) {
+        break;
+      }
       startChar = Math.max(startChar + 1, chunkEnd - this.OVERLAP);
-
-      // Avoid infinite loop
-      if (startChar >= cleanedText.length) break;
     }
 
     return chunks;

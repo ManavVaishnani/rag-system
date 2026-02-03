@@ -14,6 +14,9 @@ export class VectorService {
 
   async upsertVectors(vectors: VectorData[]): Promise<void> {
     try {
+      if (vectors.length > 0) {
+          logger.info(`Upserting ${vectors.length} vectors. First vector length: ${vectors[0].vector.length}`);
+      }
       await this.client.upsert(this.collectionName, {
         wait: true,
         points: vectors.map((v) => ({
@@ -23,9 +26,14 @@ export class VectorService {
         })),
       });
       logger.info(`Upserted ${vectors.length} vectors to Qdrant`);
-    } catch (error) {
-      logger.error('Failed to upsert vectors:', error);
-      throw new Error('Failed to store vectors');
+    } catch (error: any) {
+      logger.error('Full Qdrant Error object:', JSON.stringify(error, null, 2));
+      if (error?.data) {
+          logger.error('Qdrant error data:', JSON.stringify(error.data, null, 2));
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Failed to upsert vectors: ${errorMessage}`, error);
+      throw new Error(`Failed to store vectors: ${errorMessage}`);
     }
   }
 

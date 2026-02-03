@@ -140,6 +140,23 @@ const socket = io("http://localhost:3001", {
 - `query:cached` - `{ response: string, sources: SourceCitation[] }`
 - `query:error` - `{ error: string }`
 
+## Troubleshooting
+
+### Qdrant Vector Size Mismatch
+
+If you encounter "Bad Request" or "Vector dimension mismatch" errors:
+
+1. Ensure the `vectorSize` in `backend/src/config/index.ts` matches your embedding model (768 for `text-embedding-004`).
+2. Run the collection management script:
+   ```bash
+   cd backend
+   npx ts-node src/scripts/create-collection.ts
+   ```
+3. To force recreate the collection with correct settings:
+   ```bash
+   npx ts-node src/scripts/create-collection.ts --recreate
+   ```
+
 ## Environment Variables
 
 | Variable                 | Description                          | Required           |
