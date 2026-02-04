@@ -18,7 +18,8 @@ export const loginSchema = z.object({
 
 export const querySchema = z.object({
   query: z.string().min(1, 'Query is required').max(2000, 'Query too long'),
-  conversationId: z.string().uuid().optional(),
+  conversationId: z
+    .preprocess((val) => (val === '' || val === null ? undefined : val), z.string().uuid().optional()),
 });
 
 export const paginationSchema = z.object({

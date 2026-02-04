@@ -1,0 +1,14 @@
+{
+  "baseURL": {
+    "value": "http://localhost:3001",
+    "type": "string",
+    "id": 0,
+    "isSecret": false
+  },
+  "documentId": {
+    "value": "",
+    "type": "string",
+    "id": 1,
+    "isSecret": false
+  }
+}

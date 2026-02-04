@@ -1,0 +1,23 @@
+{
+  "name": "Create a New User (Register)",
+  "request": {
+    "type": "http",
+    "url": "{{baseURL}}/api/auth/register",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "POST",
+    "queryParams": [],
+    "headers": [],
+    "body": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"Password@123\",\r\n    \"name\": \"Test User 2\"\r\n}",
+    "bodyContainer": {
+      "text": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"Password@123\",\r\n    \"name\": \"Test User 2\"\r\n}"
+    },
+    "contentType": "application/json",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "Upload a File",
+  "request": {
+    "type": "http",
+    "url": "{{baseURL}}/api/documents/upload",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "POST",
+    "queryParams": [],
+    "headers": [],
+    "body": [
+      {
+        "id": 1770178613135,
+        "key": "file",
+        "value": "postman-cloud:///1f100e0d-4a98-45f0-afa4-6fda2874e591",
+        "isEnabled": true,
+        "type": "file"
+      }
+    ],
+    "bodyContainer": {
+      "multipartForm": [
+        {
+          "id": 1770178613135,
+          "key": "file",
+          "value": "postman-cloud:///1f100e0d-4a98-45f0-afa4-6fda2874e591",
+          "isEnabled": true,
+          "type": "file"
+        }
+      ]
+    },
+    "contentType": "multipart/form-data",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}
