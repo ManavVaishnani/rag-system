@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import { prisma } from '../config/database';
-import { generateToken } from '../middleware/auth.middleware';
-import { logger } from '../utils/logger';
-import { RegisterInput, LoginInput } from '../utils/validators';
+import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+import { prisma } from "../config/database";
+import { generateToken } from "../middleware/auth.middleware";
+import { logger } from "../utils/logger";
+import { RegisterInput, LoginInput } from "../utils/validators";
 
 export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
@@ -16,7 +16,7 @@ export class AuthController {
       });
 
       if (existingUser) {
-        res.status(400).json({ error: 'Email already registered' });
+        res.status(400).json({ error: "Email already registered" });
         return;
       }
 
@@ -51,8 +51,8 @@ export class AuthController {
         },
       });
     } catch (error) {
-      logger.error('Registration failed:', error);
-      res.status(500).json({ error: 'Registration failed' });
+      logger.error("Registration failed:", error);
+      res.status(500).json({ error: "Registration failed" });
     }
   }
 
@@ -73,14 +73,14 @@ export class AuthController {
       });
 
       if (!user) {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ error: "Invalid credentials" });
         return;
       }
 
       // Verify password
       const validPassword = await bcrypt.compare(password, user.passwordHash);
       if (!validPassword) {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ error: "Invalid credentials" });
         return;
       }
 
@@ -100,8 +100,8 @@ export class AuthController {
         },
       });
     } catch (error) {
-      logger.error('Login failed:', error);
-      res.status(500).json({ error: 'Login failed' });
+      logger.error("Login failed:", error);
+      res.status(500).json({ error: "Login failed" });
     }
   }
 
@@ -126,7 +126,7 @@ export class AuthController {
       });
 
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: "User not found" });
         return;
       }
 
@@ -135,8 +135,8 @@ export class AuthController {
         data: { user },
       });
     } catch (error) {
-      logger.error('Get user failed:', error);
-      res.status(500).json({ error: 'Failed to get user info' });
+      logger.error("Get user failed:", error);
+      res.status(500).json({ error: "Failed to get user info" });
     }
   }
 }

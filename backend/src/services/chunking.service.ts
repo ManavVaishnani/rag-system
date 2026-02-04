@@ -1,4 +1,4 @@
-import { TextChunk } from '../types';
+import { TextChunk } from "../types";
 
 export class ChunkingService {
   private readonly CHUNK_SIZE = 1000; // characters
@@ -17,7 +17,11 @@ export class ChunkingService {
 
       // Try to end at sentence boundary if not at end of text
       if (endChar < cleanedText.length) {
-        const sentenceEnd = this.findSentenceEnd(cleanedText, startChar, endChar);
+        const sentenceEnd = this.findSentenceEnd(
+          cleanedText,
+          startChar,
+          endChar,
+        );
         if (sentenceEnd > startChar + this.CHUNK_SIZE / 2) {
           chunkEnd = sentenceEnd;
         }
@@ -47,14 +51,24 @@ export class ChunkingService {
 
   private cleanText(text: string): string {
     return text
-      .replace(/\r\n/g, '\n') // Normalize line endings
-      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
-      .replace(/[ \t]{2,}/g, ' ') // Remove excessive spaces
+      .replace(/\r\n/g, "\n") // Normalize line endings
+      .replace(/\n{3,}/g, "\n\n") // Remove excessive newlines
+      .replace(/[ \t]{2,}/g, " ") // Remove excessive spaces
       .trim();
   }
 
   private findSentenceEnd(text: string, start: number, end: number): number {
-    const sentenceEnders = ['. ', '! ', '? ', '.\n', '!\n', '?\n', '."', '!"', '?"'];
+    const sentenceEnders = [
+      ". ",
+      "! ",
+      "? ",
+      ".\n",
+      "!\n",
+      "?\n",
+      '."',
+      '!"',
+      '?"',
+    ];
 
     for (let i = end; i > start + this.CHUNK_SIZE / 2; i--) {
       for (const ender of sentenceEnders) {
@@ -66,7 +80,7 @@ export class ChunkingService {
 
     // Fallback: try to end at a paragraph
     for (let i = end; i > start + this.CHUNK_SIZE / 2; i--) {
-      if (text.slice(i, i + 2) === '\n\n') {
+      if (text.slice(i, i + 2) === "\n\n") {
         return i;
       }
     }

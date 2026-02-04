@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
-import { prisma } from '../config/database';
-import { logger } from '../utils/logger';
-import { getEmbeddingService } from '../services/embedding.service';
-import { getVectorService } from '../services/vector.service';
-import { getLLMService } from '../services/llm.service';
-import { getCacheService } from '../services/cache.service';
-import { SourceCitation } from '../types';
-import { QueryInput } from '../utils/validators';
+import { Request, Response } from "express";
+import { prisma } from "../config/database";
+import { logger } from "../utils/logger";
+import { getEmbeddingService } from "../services/embedding.service";
+import { getVectorService } from "../services/vector.service";
+import { getLLMService } from "../services/llm.service";
+import { getCacheService } from "../services/cache.service";
+import { SourceCitation } from "../types";
+import { QueryInput } from "../utils/validators";
 
 export class QueryController {
   async query(req: Request, res: Response): Promise<void> {
@@ -37,13 +37,18 @@ export class QueryController {
       const queryEmbedding = await embeddingService.generateEmbedding(query);
 
       // Search for similar documents
-      const results = await vectorService.similaritySearch(queryEmbedding, userId, 5);
+      const results = await vectorService.similaritySearch(
+        queryEmbedding,
+        userId,
+        5,
+      );
 
       if (results.length === 0) {
         res.json({
           success: true,
           data: {
-            response: "I couldn't find any relevant information in your documents. Please upload some documents first or try a different question.",
+            response:
+              "I couldn't find any relevant information in your documents. Please upload some documents first or try a different question.",
             sources: [],
             cached: false,
           },
@@ -57,7 +62,9 @@ export class QueryController {
         documentId: r.payload.documentId,
         chunkId: r.payload.chunkId,
         filename: r.payload.filename,
-        content: r.payload.content.slice(0, 200) + (r.payload.content.length > 200 ? '...' : ''),
+        content:
+          r.payload.content.slice(0, 200) +
+          (r.payload.content.length > 200 ? "..." : ""),
         score: r.score,
       }));
 
@@ -65,11 +72,23 @@ export class QueryController {
       const response = await llmService.generateResponse(query, context);
 
       // Cache the result
-      await cacheService.cacheQuery(query, userId, response, sources, queryEmbedding);
+      await cacheService.cacheQuery(
+        query,
+        userId,
+        response,
+        sources,
+        queryEmbedding,
+      );
 
       // Save to conversation if provided
       if (conversationId) {
-        await this.saveToConversation(conversationId, userId, query, response, sources);
+        await this.saveToConversation(
+          conversationId,
+          userId,
+          query,
+          response,
+          sources,
+        );
       }
 
       res.json({
@@ -80,9 +99,13 @@ export class QueryController {
           cached: false,
         },
       });
-    } catch (error) {
-      logger.error('Query failed:', error);
-      res.status(500).json({ error: 'Failed to process query' });
+    } catch (error: any) {
+      logger.error("Query failed:", error);
+      res.status(500).json({
+        error: "Failed to process query",
+        details: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   }
 
@@ -91,7 +114,7 @@ export class QueryController {
     userId: string,
     query: string,
     response: string,
-    sources: SourceCitation[]
+    sources: SourceCitation[],
   ): Promise<void> {
     try {
       // Verify conversation belongs to user
@@ -109,12 +132,12 @@ export class QueryController {
         data: [
           {
             conversationId,
-            role: 'USER',
+            role: "USER",
             content: query,
           },
           {
             conversationId,
-            role: 'ASSISTANT',
+            role: "ASSISTANT",
             content: response,
             sources: JSON.parse(JSON.stringify(sources)),
           },
@@ -127,7 +150,7 @@ export class QueryController {
         data: { updatedAt: new Date() },
       });
     } catch (error) {
-      logger.error('Failed to save to conversation:', error);
+      logger.error("Failed to save to conversation:", error);
     }
   }
 }

@@ -14,6 +14,7 @@ export interface AuthenticatedUser {
 
 // Extend Express Request type
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: AuthenticatedUser;
@@ -79,7 +80,7 @@ export interface QueryRequest {
 }
 
 export interface StreamingChunk {
-  type: 'chunk' | 'complete' | 'error' | 'sources';
+  type: "chunk" | "complete" | "error" | "sources";
   data: string | SourceCitation[] | null;
 }
 

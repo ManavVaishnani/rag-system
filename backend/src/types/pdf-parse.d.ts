@@ -1,4 +1,4 @@
-declare module 'pdf-parse' {
+declare module "pdf-parse" {
   interface PDFInfo {
     PDFFormatVersion?: string;
     IsAcroFormPresent?: boolean;
@@ -27,7 +27,10 @@ declare module 'pdf-parse' {
   }
 
   interface PDFOptions {
-    pagerender?: (pageData: { pageIndex: number; getTextContent: () => Promise<unknown> }) => Promise<string>;
+    pagerender?: (pageData: {
+      pageIndex: number;
+      getTextContent: () => Promise<unknown>;
+    }) => Promise<string>;
     max?: number;
     version?: string;
   }

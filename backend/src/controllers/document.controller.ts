@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '../config/database';
-import { logger } from '../utils/logger';
-import { getDocumentParserService } from '../services/document-parser.service';
-import { getChunkingService } from '../services/chunking.service';
-import { getEmbeddingService } from '../services/embedding.service';
-import { getVectorService } from '../services/vector.service';
-import { VectorData } from '../types';
+import { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
+import { prisma } from "../config/database";
+import { logger } from "../utils/logger";
+import { getDocumentParserService } from "../services/document-parser.service";
+import { getChunkingService } from "../services/chunking.service";
+import { getEmbeddingService } from "../services/embedding.service";
+import { getVectorService } from "../services/vector.service";
+import { VectorData } from "../types";
 
 export class DocumentController {
   async upload(req: Request, res: Response): Promise<void> {
@@ -14,7 +14,7 @@ export class DocumentController {
     const userId = req.user!.userId;
 
     if (!file) {
-      res.status(400).json({ error: 'No file provided' });
+      res.status(400).json({ error: "No file provided" });
       return;
     }
 
@@ -29,17 +29,22 @@ export class DocumentController {
           originalName: file.originalname,
           fileSize: file.size,
           mimeType: file.mimetype,
-          status: 'PROCESSING',
+          status: "PROCESSING",
         },
       });
 
       documentId = document.id;
 
       // Process document asynchronously
-      this.processDocument(document.id, file.path, file.mimetype, userId, file.originalname)
-        .catch((error) => {
-          logger.error(`Document processing failed for ${document.id}:`, error);
-        });
+      this.processDocument(
+        document.id,
+        file.path,
+        file.mimetype,
+        userId,
+        file.originalname,
+      ).catch((error) => {
+        logger.error(`Document processing failed for ${document.id}:`, error);
+      });
 
       res.status(202).json({
         success: true,
@@ -47,18 +52,20 @@ export class DocumentController {
           id: document.id,
           filename: document.originalName,
           status: document.status,
-          message: 'Document uploaded and processing started',
+          message: "Document uploaded and processing started",
         },
       });
     } catch (error) {
-      logger.error('Document upload failed:', error);
+      logger.error("Document upload failed:", error);
 
       // Clean up if document was created
       if (documentId) {
-        await prisma.document.delete({ where: { id: documentId } }).catch(() => {});
+        await prisma.document
+          .delete({ where: { id: documentId } })
+          .catch(() => {});
       }
 
-      res.status(500).json({ error: 'Failed to upload document' });
+      res.status(500).json({ error: "Failed to upload document" });
     }
   }
 
@@ -67,7 +74,7 @@ export class DocumentController {
     filePath: string,
     mimeType: string,
     userId: string,
-    filename: string
+    filename: string,
   ): Promise<void> {
     const parserService = getDocumentParserService();
     const chunkingService = getChunkingService();
@@ -80,7 +87,7 @@ export class DocumentController {
       const text = await parserService.parseDocument(filePath, mimeType);
 
       if (!text || text.trim().length === 0) {
-        throw new Error('Document contains no extractable text');
+        throw new Error("Document contains no extractable text");
       }
 
       // Chunk text
@@ -88,13 +95,13 @@ export class DocumentController {
       const chunks = chunkingService.chunkText(text);
 
       if (chunks.length === 0) {
-        throw new Error('No chunks generated from document');
+        throw new Error("No chunks generated from document");
       }
 
       // Generate embeddings
       logger.info(`Generating embeddings for ${chunks.length} chunks`);
       const embeddings = await embeddingService.batchGenerateEmbeddings(
-        chunks.map((c) => c.content)
+        chunks.map((c) => c.content),
       );
 
       // Prepare vector data
@@ -146,7 +153,7 @@ export class DocumentController {
       await prisma.document.update({
         where: { id: documentId },
         data: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           chunkCount: chunks.length,
         },
       });
@@ -159,8 +166,9 @@ export class DocumentController {
       await prisma.document.update({
         where: { id: documentId },
         data: {
-          status: 'FAILED',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          status: "FAILED",
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown error",
         },
       });
     } finally {
@@ -179,7 +187,7 @@ export class DocumentController {
       const [documents, total] = await Promise.all([
         prisma.document.findMany({
           where: { userId },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           skip,
           take: limit,
           select: {
@@ -207,8 +215,8 @@ export class DocumentController {
         },
       });
     } catch (error) {
-      logger.error('List documents failed:', error);
-      res.status(500).json({ error: 'Failed to list documents' });
+      logger.error("List documents failed:", error);
+      res.status(500).json({ error: "Failed to list documents" });
     }
   }
 
@@ -230,7 +238,7 @@ export class DocumentController {
       });
 
       if (!document) {
-        res.status(404).json({ error: 'Document not found' });
+        res.status(404).json({ error: "Document not found" });
         return;
       }
 
@@ -239,8 +247,8 @@ export class DocumentController {
         data: document,
       });
     } catch (error) {
-      logger.error('Get document status failed:', error);
-      res.status(500).json({ error: 'Failed to get document status' });
+      logger.error("Get document status failed:", error);
+      res.status(500).json({ error: "Failed to get document status" });
     }
   }
 
@@ -255,7 +263,7 @@ export class DocumentController {
       });
 
       if (!document) {
-        res.status(404).json({ error: 'Document not found' });
+        res.status(404).json({ error: "Document not found" });
         return;
       }
 
@@ -270,11 +278,11 @@ export class DocumentController {
 
       res.json({
         success: true,
-        message: 'Document deleted successfully',
+        message: "Document deleted successfully",
       });
     } catch (error) {
-      logger.error('Delete document failed:', error);
-      res.status(500).json({ error: 'Failed to delete document' });
+      logger.error("Delete document failed:", error);
+      res.status(500).json({ error: "Failed to delete document" });
     }
   }
 }

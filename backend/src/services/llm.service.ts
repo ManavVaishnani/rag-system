@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
-import { config } from '../config';
-import { logger } from '../utils/logger';
+import { GoogleGenAI } from "@google/genai";
+import { config } from "../config";
+import { logger } from "../utils/logger";
 
 interface StreamOptions {
   onChunk: (chunk: string) => void;
@@ -20,7 +20,7 @@ export class LLMService {
   async streamCompletion(
     query: string,
     context: string[],
-    options: StreamOptions
+    options: StreamOptions,
   ): Promise<void> {
     try {
       const prompt = this.buildPrompt(query, context);
@@ -38,7 +38,7 @@ export class LLMService {
 
       options.onComplete?.();
     } catch (error) {
-      logger.error('LLM streaming failed:', error);
+      logger.error("LLM streaming failed:", error);
       options.onError?.(error as Error);
     }
   }
@@ -53,18 +53,18 @@ export class LLMService {
 
       const response = result.text;
       if (!response) {
-        throw new Error('No response generated from Gemini');
+        throw new Error("No response generated from Gemini");
       }
 
       return response;
     } catch (error) {
-      logger.error('LLM generation failed:', error);
-      throw new Error('Failed to generate response');
+      logger.error("LLM generation failed:", error);
+      throw new Error("Failed to generate response");
     }
   }
 
   private buildPrompt(query: string, context: string[]): string {
-    const contextText = context.join('\n\n---\n\n');
+    const contextText = context.join("\n\n---\n\n");
 
     return `You are a helpful AI assistant. Answer the user's question based on the provided context from their documents. 
 
@@ -73,7 +73,7 @@ If the context doesn't contain enough information to answer the question, say so
 Be concise but thorough. Use markdown formatting when appropriate for better readability.
 
 CONTEXT FROM USER'S DOCUMENTS:
-${contextText || 'No relevant context found.'}
+${contextText || "No relevant context found."}
 
 USER'S QUESTION:
 ${query}

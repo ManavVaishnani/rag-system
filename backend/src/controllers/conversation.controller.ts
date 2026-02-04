@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { prisma } from '../config/database';
-import { logger } from '../utils/logger';
+import { Request, Response } from "express";
+import { prisma } from "../config/database";
+import { logger } from "../utils/logger";
 
 export class ConversationController {
   async create(req: Request, res: Response): Promise<void> {
@@ -11,7 +11,7 @@ export class ConversationController {
       const conversation = await prisma.conversation.create({
         data: {
           userId,
-          title: title || 'New Conversation',
+          title: title || "New Conversation",
         },
       });
 
@@ -20,8 +20,8 @@ export class ConversationController {
         data: conversation,
       });
     } catch (error) {
-      logger.error('Create conversation failed:', error);
-      res.status(500).json({ error: 'Failed to create conversation' });
+      logger.error("Create conversation failed:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
     }
   }
 
@@ -35,7 +35,7 @@ export class ConversationController {
       const [conversations, total] = await Promise.all([
         prisma.conversation.findMany({
           where: { userId },
-          orderBy: { updatedAt: 'desc' },
+          orderBy: { updatedAt: "desc" },
           skip,
           take: limit,
           include: {
@@ -58,8 +58,8 @@ export class ConversationController {
         },
       });
     } catch (error) {
-      logger.error('List conversations failed:', error);
-      res.status(500).json({ error: 'Failed to list conversations' });
+      logger.error("List conversations failed:", error);
+      res.status(500).json({ error: "Failed to list conversations" });
     }
   }
 
@@ -72,13 +72,13 @@ export class ConversationController {
         where: { id, userId },
         include: {
           messages: {
-            orderBy: { createdAt: 'asc' },
+            orderBy: { createdAt: "asc" },
           },
         },
       });
 
       if (!conversation) {
-        res.status(404).json({ error: 'Conversation not found' });
+        res.status(404).json({ error: "Conversation not found" });
         return;
       }
 
@@ -87,8 +87,8 @@ export class ConversationController {
         data: conversation,
       });
     } catch (error) {
-      logger.error('Get conversation failed:', error);
-      res.status(500).json({ error: 'Failed to get conversation' });
+      logger.error("Get conversation failed:", error);
+      res.status(500).json({ error: "Failed to get conversation" });
     }
   }
 
@@ -103,7 +103,7 @@ export class ConversationController {
       });
 
       if (!conversation) {
-        res.status(404).json({ error: 'Conversation not found' });
+        res.status(404).json({ error: "Conversation not found" });
         return;
       }
 
@@ -117,8 +117,8 @@ export class ConversationController {
         data: updated,
       });
     } catch (error) {
-      logger.error('Update conversation failed:', error);
-      res.status(500).json({ error: 'Failed to update conversation' });
+      logger.error("Update conversation failed:", error);
+      res.status(500).json({ error: "Failed to update conversation" });
     }
   }
 
@@ -132,7 +132,7 @@ export class ConversationController {
       });
 
       if (!conversation) {
-        res.status(404).json({ error: 'Conversation not found' });
+        res.status(404).json({ error: "Conversation not found" });
         return;
       }
 
@@ -140,11 +140,11 @@ export class ConversationController {
 
       res.json({
         success: true,
-        message: 'Conversation deleted successfully',
+        message: "Conversation deleted successfully",
       });
     } catch (error) {
-      logger.error('Delete conversation failed:', error);
-      res.status(500).json({ error: 'Failed to delete conversation' });
+      logger.error("Delete conversation failed:", error);
+      res.status(500).json({ error: "Failed to delete conversation" });
     }
   }
 }

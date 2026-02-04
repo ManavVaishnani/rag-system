@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { ZodError, ZodSchema } from 'zod';
-import { logger } from '../utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { ZodError, ZodSchema } from "zod";
+import { logger } from "../utils/logger";
 
 export function validateBody(schema: ZodSchema) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -10,10 +10,10 @@ export function validateBody(schema: ZodSchema) {
     } catch (error) {
       if (error instanceof ZodError) {
         const errors = error.errors.map((e) => ({
-          field: e.path.join('.'),
+          field: e.path.join("."),
           message: e.message,
         }));
-        res.status(400).json({ error: 'Validation failed', details: errors });
+        res.status(400).json({ error: "Validation failed", details: errors });
         return;
       }
       next(error);
@@ -29,10 +29,10 @@ export function validateQuery(schema: ZodSchema) {
     } catch (error) {
       if (error instanceof ZodError) {
         const errors = error.errors.map((e) => ({
-          field: e.path.join('.'),
+          field: e.path.join("."),
           message: e.message,
         }));
-        res.status(400).json({ error: 'Validation failed', details: errors });
+        res.status(400).json({ error: "Validation failed", details: errors });
         return;
       }
       next(error);
@@ -45,14 +45,14 @@ export function errorHandler(
   error: Error,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void {
-  logger.error('Unhandled error:', error);
+  logger.error("Unhandled error:", error);
 
   // Don't expose internal errors in production
   const message =
-    process.env.NODE_ENV === 'production'
-      ? 'Internal server error'
+    process.env.NODE_ENV === "production"
+      ? "Internal server error"
       : error.message;
 
   res.status(500).json({ error: message });

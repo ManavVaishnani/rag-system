@@ -1,10 +1,10 @@
-import { getRedisClient } from '../config/redis';
-import { config } from '../config';
-import { logger } from '../utils/logger';
-import { CachedQueryResult, SourceCitation } from '../types';
-import { getEmbeddingService } from './embedding.service';
+import { getRedisClient } from "../config/redis";
+import { config } from "../config";
+import { logger } from "../utils/logger";
+import { CachedQueryResult, SourceCitation } from "../types";
+import { getEmbeddingService } from "./embedding.service";
 
-const CACHE_PREFIX = 'rag:';
+const CACHE_PREFIX = "rag:";
 const QUERY_CACHE_PREFIX = `${CACHE_PREFIX}query:`;
 
 export class CacheService {
@@ -17,7 +17,7 @@ export class CacheService {
       const value = await this.redis.get(CACHE_PREFIX + key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      logger.error('Cache get failed:', error);
+      logger.error("Cache get failed:", error);
       return null;
     }
   }
@@ -31,7 +31,7 @@ export class CacheService {
         await this.redis.set(CACHE_PREFIX + key, serialized);
       }
     } catch (error) {
-      logger.error('Cache set failed:', error);
+      logger.error("Cache set failed:", error);
     }
   }
 
@@ -39,13 +39,13 @@ export class CacheService {
     try {
       await this.redis.del(CACHE_PREFIX + key);
     } catch (error) {
-      logger.error('Cache delete failed:', error);
+      logger.error("Cache delete failed:", error);
     }
   }
 
   async semanticSearch(
     query: string,
-    userId: string
+    userId: string,
   ): Promise<CachedQueryResult | null> {
     try {
       const embeddingService = getEmbeddingService();
@@ -60,17 +60,22 @@ export class CacheService {
         if (!cached) continue;
 
         const cachedData: CachedQueryResult = JSON.parse(cached);
-        const similarity = this.cosineSimilarity(queryEmbedding, cachedData.embedding);
+        const similarity = this.cosineSimilarity(
+          queryEmbedding,
+          cachedData.embedding,
+        );
 
         if (similarity >= config.cache.semanticThreshold) {
-          logger.info(`Semantic cache hit: similarity=${similarity.toFixed(3)}`);
+          logger.info(
+            `Semantic cache hit: similarity=${similarity.toFixed(3)}`,
+          );
           return cachedData;
         }
       }
 
       return null;
     } catch (error) {
-      logger.error('Semantic search failed:', error);
+      logger.error("Semantic search failed:", error);
       return null;
     }
   }
@@ -80,7 +85,7 @@ export class CacheService {
     userId: string,
     response: string,
     sources: SourceCitation[],
-    embedding: number[]
+    embedding: number[],
   ): Promise<void> {
     const key = `${QUERY_CACHE_PREFIX}${userId}:${Date.now()}`;
     const data: CachedQueryResult = {
@@ -95,7 +100,7 @@ export class CacheService {
       await this.redis.setex(key, config.cache.queryTtl, JSON.stringify(data));
       logger.debug(`Cached query for user ${userId}`);
     } catch (error) {
-      logger.error('Failed to cache query:', error);
+      logger.error("Failed to cache query:", error);
     }
   }
 
@@ -108,7 +113,7 @@ export class CacheService {
         logger.info(`Cleared ${keys.length} cached queries for user ${userId}`);
       }
     } catch (error) {
-      logger.error('Failed to clear user cache:', error);
+      logger.error("Failed to clear user cache:", error);
     }
   }
 

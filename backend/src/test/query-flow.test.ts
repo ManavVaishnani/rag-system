@@ -1,11 +1,11 @@
-import { QueryController } from '../controllers/query.controller';
-import { getEmbeddingService } from '../services/embedding.service';
-import { getVectorService } from '../services/vector.service';
-import { getLLMService } from '../services/llm.service';
-import { getCacheService } from '../services/cache.service';
+import { QueryController } from "../controllers/query.controller";
+import { getEmbeddingService } from "../services/embedding.service";
+import { getVectorService } from "../services/vector.service";
+import { getLLMService } from "../services/llm.service";
+import { getCacheService } from "../services/cache.service";
 
 // Mock dependencies
-jest.mock('../config/database', () => ({
+jest.mock("../config/database", () => ({
   prisma: {
     conversation: {
       findFirst: jest.fn(),
@@ -17,13 +17,13 @@ jest.mock('../config/database', () => ({
   },
 }));
 
-jest.mock('../services/embedding.service');
-jest.mock('../services/vector.service');
-jest.mock('../services/llm.service');
-jest.mock('../services/cache.service');
-jest.mock('../utils/logger');
+jest.mock("../services/embedding.service");
+jest.mock("../services/vector.service");
+jest.mock("../services/llm.service");
+jest.mock("../services/cache.service");
+jest.mock("../utils/logger");
 
-describe('Query Flow', () => {
+describe("Query Flow", () => {
   let queryController: QueryController;
   let mockEmbedding: any;
   let mockVector: any;
@@ -52,8 +52,8 @@ describe('Query Flow', () => {
     (getCacheService as jest.Mock).mockReturnValue(mockCache);
 
     req = {
-      body: { query: 'Test query' },
-      user: { userId: 'user-123' }
+      body: { query: "Test query" },
+      user: { userId: "user-123" },
     };
 
     res = {
@@ -62,45 +62,59 @@ describe('Query Flow', () => {
     };
   });
 
-  describe('query', () => {
-    it('should return cached result if semantic cache hits', async () => {
+  describe("query", () => {
+    it("should return cached result if semantic cache hits", async () => {
       const cachedData = {
-        response: 'Cached response',
-        sources: []
+        response: "Cached response",
+        sources: [],
       };
       mockCache.semanticSearch.mockResolvedValue(cachedData);
 
       await queryController.query(req, res);
 
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: expect.objectContaining({ response: 'Cached response' })
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: expect.objectContaining({ response: "Cached response" }),
+        }),
+      );
     });
 
-    it('should proceed with full RAG flow if cache misses', async () => {
+    it("should proceed with full RAG flow if cache misses", async () => {
       mockCache.semanticSearch.mockResolvedValue(null);
       mockEmbedding.generateEmbedding.mockResolvedValue([0.1]);
-      mockVector.similaritySearch.mockResolvedValue([{
-        score: 0.8, payload: { content: 'Context', documentId: 'd', filename: 'f', chunkId: 'c' }
-      }]);
-      mockLLM.generateResponse.mockResolvedValue('LLM Response');
+      mockVector.similaritySearch.mockResolvedValue([
+        {
+          score: 0.8,
+          payload: {
+            content: "Context",
+            documentId: "d",
+            filename: "f",
+            chunkId: "c",
+          },
+        },
+      ]);
+      mockLLM.generateResponse.mockResolvedValue("LLM Response");
 
       await queryController.query(req, res);
 
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: expect.objectContaining({ response: 'LLM Response' })
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: expect.objectContaining({ response: "LLM Response" }),
+        }),
+      );
     });
 
-    it('should handle errors gracefully', async () => {
-       mockCache.semanticSearch.mockRejectedValue(new Error('Redis Error'));
+    it("should handle errors gracefully", async () => {
+      mockCache.semanticSearch.mockRejectedValue(new Error("Redis Error"));
 
-       await queryController.query(req, res);
+      await queryController.query(req, res);
 
-       expect(res.status).toHaveBeenCalledWith(500);
-       expect(res.json).toHaveBeenCalledWith({ error: 'Failed to process query' });
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Failed to process query",
+      });
     });
   });
 });

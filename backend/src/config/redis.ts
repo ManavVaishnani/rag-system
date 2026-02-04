@@ -1,6 +1,6 @@
-import Redis from 'ioredis';
-import { config } from './index';
-import { logger } from '../utils/logger';
+import Redis from "ioredis";
+import { config } from "./index";
+import { logger } from "../utils/logger";
 
 let redis: Redis | null = null;
 
@@ -11,16 +11,16 @@ export function getRedisClient(): Redis {
       lazyConnect: true,
     });
 
-    redis.on('connect', () => {
-      logger.info('Redis connected successfully');
+    redis.on("connect", () => {
+      logger.info("Redis connected successfully");
     });
 
-    redis.on('error', (error: Error) => {
-      logger.error('Redis connection error:', error);
+    redis.on("error", (error: Error) => {
+      logger.error("Redis connection error:", error);
     });
 
-    redis.on('close', () => {
-      logger.warn('Redis connection closed');
+    redis.on("close", () => {
+      logger.warn("Redis connection closed");
     });
   }
 
@@ -33,7 +33,7 @@ export async function connectRedis(): Promise<void> {
     await client.connect();
   } catch (error) {
     // Already connected or connecting
-    if ((error as Error).message !== 'Redis is already connecting/connected') {
+    if ((error as Error).message !== "Redis is already connecting/connected") {
       throw error;
     }
   }
@@ -43,6 +43,6 @@ export async function disconnectRedis(): Promise<void> {
   if (redis) {
     await redis.quit();
     redis = null;
-    logger.info('Redis disconnected');
+    logger.info("Redis disconnected");
   }
 }

@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
-import { config } from '../config';
-import { logger } from '../utils/logger';
+import { GoogleGenAI } from "@google/genai";
+import { config } from "../config";
+import { logger } from "../utils/logger";
 
 export class EmbeddingService {
   private client: GoogleGenAI;
@@ -19,12 +19,13 @@ export class EmbeddingService {
       });
 
       if (!result.embeddings || result.embeddings.length === 0) {
-        throw new Error('No embedding returned from Gemini');
+        throw new Error("No embedding returned from Gemini");
       }
 
       return result.embeddings[0].values!;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       logger.error(`Embedding generation failed: ${errorMessage}`, error);
       throw new Error(`Failed to generate embedding: ${errorMessage}`);
     }

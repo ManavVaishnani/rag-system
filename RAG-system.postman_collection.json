@@ -1,0 +1,205 @@
+{
+  "info": {
+    "_postman_id": "8071eb0d-a74e-44c0-942d-25c171b6b0b7",
+    "name": "RAG-system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "45596791"
+  },
+  "item": [
+    {
+      "name": "Login (Existing User)",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"test@example.com\",\r\n    \"password\": \"Password123!\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseURL}}/api/auth/login",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create a New User (Register)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"Password@123\",\r\n    \"name\": \"Test User 2\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseURL}}/api/auth/register",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Upload a File",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "9463d6ef-9275-4e8b-bec1-afeeb9ae9afc",
+              "src": "postman-cloud:///1f100e0d-4a98-45f0-afa4-6fda2874e591"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseURL}}/api/documents/upload",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "upload"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check Processing Status",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "9463d6ef-9275-4e8b-bec1-afeeb9ae9afc",
+              "src": "/C:/Users/krish/Downloads/sample.pdf"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseURL}}/api/documents/{{documentId}}/status",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "api",
+            "documents",
+            "{{documentId}}",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Querying (The RAG Test)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"query\": \"Summerize the document?\",\r\n    \"conversationId\": \"optional-uuid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseURL}}/api/query",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "api",
+            "query"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjZTJjZjFkZC1kZDVkLTRhNTEtOGVkYS05YzMxNWIyNTI0MmEiLCJpYXQiOjE3NzAxMDg0OTMsImV4cCI6MTc3MDcxMzI5M30.IAGFiOE0naW2zcm8Vw7CUcrnK7xjhH5ZtsiqkRWrM0o",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": ""
+    },
+    {
+      "key": "documentId",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
-import { prisma } from '../config/database';
-import { disconnectRedis } from '../config/redis';
+import { prisma } from "../config/database";
+import { disconnectRedis } from "../config/redis";
 
 beforeAll(async () => {
   // Ensure database is connected
@@ -18,9 +18,11 @@ export const cleanDatabase = async () => {
   >`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename NOT LIKE '_prisma_migrations';`;
 
   for (const { tablename } of tablenames) {
-    if (tablename !== '_prisma_migrations') {
+    if (tablename !== "_prisma_migrations") {
       try {
-        await prisma.$executeRawUnsafe(`TRUNCATE TABLE "public"."${tablename}" CASCADE;`);
+        await prisma.$executeRawUnsafe(
+          `TRUNCATE TABLE "public"."${tablename}" CASCADE;`,
+        );
       } catch (error) {
         console.log({ error });
       }

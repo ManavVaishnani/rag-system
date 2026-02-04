@@ -1,24 +1,24 @@
-import fs from 'fs/promises';
-import pdf from 'pdf-parse';
-import mammoth from 'mammoth';
-import { logger } from '../utils/logger';
+import fs from "fs/promises";
+import pdf from "pdf-parse";
+import mammoth from "mammoth";
+import { logger } from "../utils/logger";
 
 export class DocumentParserService {
   async parseDocument(filePath: string, mimeType: string): Promise<string> {
     try {
       switch (mimeType) {
-        case 'application/pdf':
+        case "application/pdf":
           return await this.parsePDF(filePath);
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
           return await this.parseDOCX(filePath);
-        case 'text/plain':
-        case 'text/markdown':
+        case "text/plain":
+        case "text/markdown":
           return await this.parseText(filePath);
         default:
           throw new Error(`Unsupported file type: ${mimeType}`);
       }
     } catch (error) {
-      logger.error('Document parsing failed:', error);
+      logger.error("Document parsing failed:", error);
       throw error;
     }
   }
@@ -35,7 +35,7 @@ export class DocumentParserService {
   }
 
   private async parseText(filePath: string): Promise<string> {
-    return await fs.readFile(filePath, 'utf-8');
+    return await fs.readFile(filePath, "utf-8");
   }
 
   async deleteFile(filePath: string): Promise<void> {

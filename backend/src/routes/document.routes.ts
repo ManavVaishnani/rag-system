@@ -1,12 +1,12 @@
-import { Router } from 'express';
-import multer from 'multer';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { documentController } from '../controllers/document.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { uploadRateLimiter } from '../middleware/rate-limit.middleware';
-import { config } from '../config';
-import fs from 'fs';
+import { Router } from "express";
+import multer from "multer";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import { documentController } from "../controllers/document.controller";
+import { authMiddleware } from "../middleware/auth.middleware";
+import { uploadRateLimiter } from "../middleware/rate-limit.middleware";
+import { config } from "../config";
+import fs from "fs";
 
 // Ensure upload directory exists
 const uploadDir = path.resolve(config.upload.uploadDir);
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 const fileFilter = (
   _req: Express.Request,
   file: Express.Multer.File,
-  cb: multer.FileFilterCallback
+  cb: multer.FileFilterCallback,
 ) => {
   if (config.upload.allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -51,20 +51,17 @@ const router = Router();
 router.use(authMiddleware);
 
 // Upload document
-router.post(
-  '/upload',
-  uploadRateLimiter,
-  upload.single('file'),
-  (req, res) => documentController.upload(req, res)
+router.post("/upload", uploadRateLimiter, upload.single("file"), (req, res) =>
+  documentController.upload(req, res),
 );
 
 // List documents
-router.get('/', (req, res) => documentController.list(req, res));
+router.get("/", (req, res) => documentController.list(req, res));
 
 // Get document status
-router.get('/:id/status', (req, res) => documentController.getStatus(req, res));
+router.get("/:id/status", (req, res) => documentController.getStatus(req, res));
 
 // Delete document
-router.delete('/:id', (req, res) => documentController.delete(req, res));
+router.delete("/:id", (req, res) => documentController.delete(req, res));
 
 export default router;
