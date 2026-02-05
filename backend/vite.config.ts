@@ -4,7 +4,7 @@ import { nodeExternals } from 'rollup-plugin-node-externals';
 export default defineConfig({
   plugins: [nodeExternals()],
   build: {
-    target: 'node18',
+    target: 'node22',
     lib: {
       entry: 'src/server.ts',
       formats: ['cjs'],

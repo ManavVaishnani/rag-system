@@ -9,7 +9,7 @@ export function getQdrantClient(): QdrantClient {
     qdrantClient = new QdrantClient({
       url: config.qdrant.url,
       apiKey: config.qdrant.apiKey,
-      checkCompatibility: false,
+      checkCompatibility: true,
     });
   }
 

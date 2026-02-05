@@ -11,7 +11,7 @@ import { QueryInput } from "../utils/validators";
 export class QueryController {
   async query(req: Request, res: Response): Promise<void> {
     try {
-      const { query, conversationId } = req.body as QueryInput;
+      let { query, conversationId } = req.body as QueryInput;
       const userId = req.user!.userId;
 
       const embeddingService = getEmbeddingService();
@@ -19,14 +19,37 @@ export class QueryController {
       const llmService = getLLMService();
       const cacheService = getCacheService();
 
+      // Create a new conversation if conversationId is not provided
+      let activeConversationId = conversationId;
+      if (!activeConversationId) {
+        const newConversation = await prisma.conversation.create({
+          data: {
+            userId,
+            title: query.slice(0, 100) + (query.length > 100 ? "..." : ""),
+          },
+        });
+        activeConversationId = newConversation.id;
+        logger.info(`Created new conversation: ${activeConversationId}`);
+      }
+
       // Check semantic cache first
       const cached = await cacheService.semanticSearch(query, userId);
       if (cached) {
+        // Even for cached responses, save to conversation
+        await this.saveToConversation(
+          activeConversationId,
+          userId,
+          query,
+          cached.response,
+          cached.sources,
+        );
+
         res.json({
           success: true,
           data: {
             response: cached.response,
             sources: cached.sources,
+            conversationId: activeConversationId,
             cached: true,
           },
         });
@@ -44,12 +67,24 @@ export class QueryController {
       );
 
       if (results.length === 0) {
+        const noResultsResponse =
+          "I couldn't find any relevant information in your documents. Please upload some documents first or try a different question.";
+        
+        // Save the query and response even when no results found
+        await this.saveToConversation(
+          activeConversationId,
+          userId,
+          query,
+          noResultsResponse,
+          [],
+        );
+
         res.json({
           success: true,
           data: {
-            response:
-              "I couldn't find any relevant information in your documents. Please upload some documents first or try a different question.",
+            response: noResultsResponse,
             sources: [],
+            conversationId: activeConversationId,
             cached: false,
           },
         });
@@ -80,22 +115,21 @@ export class QueryController {
         queryEmbedding,
       );
 
-      // Save to conversation if provided
-      if (conversationId) {
-        await this.saveToConversation(
-          conversationId,
-          userId,
-          query,
-          response,
-          sources,
-        );
-      }
+      // Always save to conversation
+      await this.saveToConversation(
+        activeConversationId,
+        userId,
+        query,
+        response,
+        sources,
+      );
 
       res.json({
         success: true,
         data: {
           response,
           sources,
+          conversationId: activeConversationId,
           cached: false,
         },
       });

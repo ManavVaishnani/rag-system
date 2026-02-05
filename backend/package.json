@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "vite-node src/server.ts --watch",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -28,7 +28,7 @@
     "@google/genai": "^1.39.0",
     "@prisma/client": "^5.20.0",
     "@qdrant/js-client-rest": "^1.11.0",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "bull": "^4.16.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
