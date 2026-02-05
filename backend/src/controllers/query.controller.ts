@@ -11,7 +11,7 @@ import { QueryInput } from "../utils/validators";
 export class QueryController {
   async query(req: Request, res: Response): Promise<void> {
     try {
-      let { query, conversationId } = req.body as QueryInput;
+      const { query, conversationId } = req.body as QueryInput;
       const userId = req.user!.userId;
 
       const embeddingService = getEmbeddingService();
@@ -69,7 +69,7 @@ export class QueryController {
       if (results.length === 0) {
         const noResultsResponse =
           "I couldn't find any relevant information in your documents. Please upload some documents first or try a different question.";
-        
+
         // Save the query and response even when no results found
         await this.saveToConversation(
           activeConversationId,

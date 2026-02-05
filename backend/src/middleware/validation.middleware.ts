@@ -62,3 +62,21 @@ export function errorHandler(
 export function notFoundHandler(req: Request, res: Response): void {
   res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
 }
+
+// Timeout error handler
+export function timeoutErrorHandler(
+  error: Error,
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (error && error.message === "Response timeout") {
+    logger.error("Request timeout:", {
+      path: _req.path,
+      method: _req.method,
+    });
+    res.status(503).json({ error: "Request timeout" });
+    return;
+  }
+  next(error);
+}

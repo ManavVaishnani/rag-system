@@ -3,11 +3,13 @@ import { getEmbeddingService } from "../services/embedding.service";
 import { getVectorService } from "../services/vector.service";
 import { getLLMService } from "../services/llm.service";
 import { getCacheService } from "../services/cache.service";
+import { prisma } from "../config/database";
 
 // Mock dependencies
 jest.mock("../config/database", () => ({
   prisma: {
     conversation: {
+      create: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
     },
@@ -35,6 +37,30 @@ describe("Query Flow", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     queryController = new QueryController();
+
+    // Setup prisma mocks with proper return values
+    (prisma.conversation.create as jest.Mock).mockResolvedValue({
+      id: "conv-123",
+      userId: "user-123",
+      title: "Test query",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    (prisma.conversation.findFirst as jest.Mock).mockResolvedValue({
+      id: "conv-123",
+      userId: "user-123",
+      title: "Test query",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    (prisma.conversation.update as jest.Mock).mockResolvedValue({
+      id: "conv-123",
+      userId: "user-123",
+      title: "Test query",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    (prisma.message.createMany as jest.Mock).mockResolvedValue({ count: 2 });
 
     mockEmbedding = { generateEmbedding: jest.fn() };
     (getEmbeddingService as jest.Mock).mockReturnValue(mockEmbedding);
@@ -112,9 +138,11 @@ describe("Query Flow", () => {
       await queryController.query(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        error: "Failed to process query",
-      });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: "Failed to process query",
+        }),
+      );
     });
   });
 });

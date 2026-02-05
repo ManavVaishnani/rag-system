@@ -1,7 +1,8 @@
+import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/database";
-import { generateToken } from "../middleware/auth.middleware";
+import { getTokenService } from "../services/token.service";
 import { logger } from "../utils/logger";
 import { RegisterInput, LoginInput } from "../utils/validators";
 
@@ -38,8 +39,10 @@ export class AuthController {
         },
       });
 
-      // Generate JWT token
-      const token = generateToken(user.id);
+      // Generate token pair (access + refresh)
+      const tokenService = getTokenService();
+      const { accessToken, refreshToken } =
+        await tokenService.generateTokenPair(user.id);
 
       logger.info(`User registered: ${user.email}`);
 
@@ -47,7 +50,10 @@ export class AuthController {
         success: true,
         data: {
           user,
-          token,
+          tokens: {
+            accessToken,
+            refreshToken,
+          },
         },
       });
     } catch (error) {
@@ -84,24 +90,97 @@ export class AuthController {
         return;
       }
 
-      // Generate JWT token
-      const token = generateToken(user.id);
+      // Generate token pair (access + refresh)
+      const tokenService = getTokenService();
+      const { accessToken, refreshToken } =
+        await tokenService.generateTokenPair(user.id);
 
       logger.info(`User logged in: ${user.email}`);
 
       // Remove passwordHash from response
-      const { passwordHash: _, ...userWithoutPassword } = user;
+      const { passwordHash: _unused, ...userWithoutPassword } = user;
 
       res.json({
         success: true,
         data: {
           user: userWithoutPassword,
-          token,
+          tokens: {
+            accessToken,
+            refreshToken,
+          },
         },
       });
     } catch (error) {
       logger.error("Login failed:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  }
+
+  async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        res.status(400).json({ error: "Refresh token required" });
+        return;
+      }
+
+      const tokenService = getTokenService();
+      const tokens = await tokenService.refreshAccessToken(refreshToken);
+
+      logger.info("Token refreshed successfully");
+
+      res.json({
+        success: true,
+        data: {
+          tokens,
+        },
+      });
+    } catch (error) {
+      logger.error("Token refresh failed:", error);
+
+      // Handle JWT errors
+      if (error instanceof jwt.JsonWebTokenError) {
+        res.status(401).json({ error: "Invalid or expired refresh token" });
+        return;
+      }
+      if (error instanceof jwt.TokenExpiredError) {
+        res.status(401).json({ error: "Invalid or expired refresh token" });
+        return;
+      }
+
+      // Handle specific error messages
+      if (error instanceof Error) {
+        if (
+          error.message.includes("revoked") ||
+          error.message.includes("Invalid token type") ||
+          error.message.includes("Invalid refresh token")
+        ) {
+          res.status(401).json({ error: "Invalid or expired refresh token" });
+          return;
+        }
+      }
+
+      res.status(500).json({ error: "Token refresh failed" });
+    }
+  }
+
+  async logout(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+
+      const tokenService = getTokenService();
+      await tokenService.revokeAllUserTokens(userId);
+
+      logger.info(`User logged out: ${userId}`);
+
+      res.json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    } catch (error) {
+      logger.error("Logout failed:", error);
+      res.status(500).json({ error: "Logout failed" });
     }
   }
 

@@ -13,6 +13,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string(),
   REDIS_URL: z.string().default("redis://localhost:6379"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  JWT_ACCESS_EXPIRY: z.string().default("15m"),
+  JWT_REFRESH_EXPIRY: z.string().default("7d"),
   GEMINI_API_KEY: z.string(),
   QDRANT_URL: z.string(),
   QDRANT_API_KEY: z.string(),
@@ -52,7 +54,8 @@ export const config = {
   },
   jwt: {
     secret: env.JWT_SECRET,
-    expiresIn: "7d",
+    accessExpiry: env.JWT_ACCESS_EXPIRY,
+    refreshExpiry: env.JWT_REFRESH_EXPIRY,
   },
   gemini: {
     apiKey: env.GEMINI_API_KEY,

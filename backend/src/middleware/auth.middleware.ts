@@ -2,16 +2,25 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
 import { prisma } from "../config/database";
+import { getTokenService } from "../services/token.service";
 import { JwtPayload } from "../types";
 import { logger } from "../utils/logger";
 
+/**
+ * Legacy function - kept for backward compatibility, use getTokenService() instead
+ * @deprecated Use getTokenService().generateTokenPair() instead
+ */
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, config.jwt.secret) as JwtPayload;
 }
 
+/**
+ * Legacy function - kept for backward compatibility, use getTokenService() instead
+ * @deprecated Use getTokenService().generateTokenPair() instead
+ */
 export function generateToken(userId: string): string {
   return jwt.sign({ userId }, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn as jwt.SignOptions["expiresIn"],
+    expiresIn: config.jwt.accessExpiry as jwt.SignOptions["expiresIn"],
   });
 }
 
@@ -29,7 +38,14 @@ export async function authMiddleware(
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyToken(token);
+    const tokenService = getTokenService();
+    const decoded = tokenService.verifyToken(token);
+
+    // Ensure this is an access token, not a refresh token
+    if (decoded.type !== "access") {
+      res.status(401).json({ error: "Invalid token type" });
+      return;
+    }
 
     // Verify user exists
     const user = await prisma.user.findUnique({
