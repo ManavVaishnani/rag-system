@@ -16,6 +16,8 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
   GEMINI_API_KEY: z.string(),
+  GEMINI_EMBEDDING_MODEL: z.string().default("gemini-embedding-001"),
+  GEMINI_LLM_MODEL: z.string().default("gemini-2.5-flash"),
   QDRANT_URL: z.string(),
   QDRANT_API_KEY: z.string(),
   QDRANT_COLLECTION_NAME: z.string().default("rag-documents"),
@@ -59,8 +61,8 @@ export const config = {
   },
   gemini: {
     apiKey: env.GEMINI_API_KEY,
-    embeddingModel: "text-embedding-004",
-    llmModel: "gemini-2.5-flash",
+    embeddingModel: env.GEMINI_EMBEDDING_MODEL,
+    llmModel: env.GEMINI_LLM_MODEL,
   },
   qdrant: {
     url: env.QDRANT_URL,

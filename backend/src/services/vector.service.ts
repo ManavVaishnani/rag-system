@@ -101,6 +101,19 @@ export class VectorService {
       throw new Error("Failed to delete user vectors");
     }
   }
+
+  async deleteAllVectors(): Promise<void> {
+    try {
+      await this.client.delete(this.collectionName, {
+        wait: true,
+        filter: {},
+      });
+      logger.info("Deleted all vectors from collection");
+    } catch (error) {
+      logger.error("Failed to delete all vectors:", error);
+      throw new Error("Failed to delete all vectors");
+    }
+  }
 }
 
 // Singleton instance

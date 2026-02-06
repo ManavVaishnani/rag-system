@@ -16,6 +16,9 @@ export class EmbeddingService {
       const result = await this.client.models.embedContent({
         model: this.model,
         contents: [text],
+        config: {
+          outputDimensionality: 768,
+        },
       });
 
       if (!result.embeddings || result.embeddings.length === 0) {
