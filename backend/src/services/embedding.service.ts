@@ -1,36 +1,56 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 import { logger } from "../utils/logger";
+import {
+  createCircuitBreaker,
+  CircuitBreakerConfigs,
+} from "./circuit-breaker.service";
 
 export class EmbeddingService {
   private client: GoogleGenAI;
   private model: string;
+  private embeddingBreaker;
 
   constructor() {
     this.client = new GoogleGenAI({ apiKey: config.gemini.apiKey });
     this.model = config.gemini.embeddingModel;
+
+    // Initialize circuit breaker for embedding generation
+    this.embeddingBreaker = createCircuitBreaker(
+      this.generateEmbeddingInternal.bind(this),
+      CircuitBreakerConfigs.geminiEmbedding,
+      () => {
+        throw new Error(
+          "Embedding service temporarily unavailable. Please try again later.",
+        );
+      },
+    );
+  }
+
+  private async generateEmbeddingInternal(text: string): Promise<number[]> {
+    const result = await this.client.models.embedContent({
+      model: this.model,
+      contents: [text],
+      config: {
+        outputDimensionality: 768,
+      },
+    });
+
+    if (!result.embeddings || result.embeddings.length === 0) {
+      throw new Error("No embedding returned from Gemini");
+    }
+
+    return result.embeddings[0].values!;
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const result = await this.client.models.embedContent({
-        model: this.model,
-        contents: [text],
-        config: {
-          outputDimensionality: 768,
-        },
-      });
-
-      if (!result.embeddings || result.embeddings.length === 0) {
-        throw new Error("No embedding returned from Gemini");
-      }
-
-      return result.embeddings[0].values!;
+      return (await this.embeddingBreaker.fire(text)) as number[];
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       logger.error(`Embedding generation failed: ${errorMessage}`, error);
-      throw new Error(`Failed to generate embedding: ${errorMessage}`);
+      throw error;
     }
   }
 

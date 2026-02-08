@@ -1,6 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 import { logger } from "../utils/logger";
+import {
+  createCircuitBreaker,
+  CircuitBreakerConfigs,
+} from "./circuit-breaker.service";
 
 interface StreamOptions {
   onChunk: (chunk: string) => void;
@@ -11,10 +15,22 @@ interface StreamOptions {
 export class LLMService {
   private client: GoogleGenAI;
   private model: string;
+  private llmBreaker;
 
   constructor() {
     this.client = new GoogleGenAI({ apiKey: config.gemini.apiKey });
     this.model = config.gemini.llmModel;
+
+    // Initialize circuit breaker for LLM generation
+    this.llmBreaker = createCircuitBreaker(
+      this.generateResponseInternal.bind(this),
+      CircuitBreakerConfigs.geminiLLM,
+      () => {
+        throw new Error(
+          "LLM service temporarily unavailable. Please try again later.",
+        );
+      },
+    );
   }
 
   async streamCompletion(
@@ -43,23 +59,30 @@ export class LLMService {
     }
   }
 
+  private async generateResponseInternal(
+    query: string,
+    context: string[],
+  ): Promise<string> {
+    const prompt = this.buildPrompt(query, context);
+    const result = await this.client.models.generateContent({
+      model: this.model,
+      contents: prompt,
+    });
+
+    const response = result.text;
+    if (!response) {
+      throw new Error("No response generated from Gemini");
+    }
+
+    return response;
+  }
+
   async generateResponse(query: string, context: string[]): Promise<string> {
     try {
-      const prompt = this.buildPrompt(query, context);
-      const result = await this.client.models.generateContent({
-        model: this.model,
-        contents: prompt,
-      });
-
-      const response = result.text;
-      if (!response) {
-        throw new Error("No response generated from Gemini");
-      }
-
-      return response;
+      return (await this.llmBreaker.fire(query, context)) as string;
     } catch (error) {
       logger.error("LLM generation failed:", error);
-      throw new Error("Failed to generate response");
+      throw error;
     }
   }
 

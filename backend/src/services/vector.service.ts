@@ -2,6 +2,10 @@ import { getQdrantClient } from "../config/qdrant";
 import { config } from "../config";
 import { logger } from "../utils/logger";
 import { VectorData, SearchResult, VectorPayload } from "../types";
+import {
+  createCircuitBreaker,
+  CircuitBreakerConfigs,
+} from "./circuit-breaker.service";
 
 export class VectorService {
   private get client() {
@@ -12,22 +16,54 @@ export class VectorService {
     return config.qdrant.collectionName;
   }
 
+  private upsertBreaker;
+  private searchBreaker;
+
+  constructor() {
+    // Initialize circuit breakers for Qdrant operations
+    this.upsertBreaker = createCircuitBreaker(
+      this.upsertVectorsInternal.bind(this),
+      CircuitBreakerConfigs.qdrant,
+      () => {
+        throw new Error(
+          "Vector storage service temporarily unavailable. Please try again later.",
+        );
+      },
+    );
+
+    this.searchBreaker = createCircuitBreaker(
+      this.similaritySearchInternal.bind(this),
+      CircuitBreakerConfigs.qdrant,
+      async () => {
+        // Return empty results for search fallback (graceful degradation)
+        logger.warn(
+          "Vector search circuit breaker open, returning empty results",
+        );
+        return [] as SearchResult[];
+      },
+    );
+  }
+
+  private async upsertVectorsInternal(vectors: VectorData[]): Promise<void> {
+    if (vectors.length > 0) {
+      logger.info(
+        `Upserting ${vectors.length} vectors. First vector length: ${vectors[0].vector.length}`,
+      );
+    }
+    await this.client.upsert(this.collectionName, {
+      wait: true,
+      points: vectors.map((v) => ({
+        id: v.id,
+        vector: v.vector,
+        payload: v.payload as unknown as Record<string, unknown>,
+      })),
+    });
+    logger.info(`Upserted ${vectors.length} vectors to Qdrant`);
+  }
+
   async upsertVectors(vectors: VectorData[]): Promise<void> {
     try {
-      if (vectors.length > 0) {
-        logger.info(
-          `Upserting ${vectors.length} vectors. First vector length: ${vectors[0].vector.length}`,
-        );
-      }
-      await this.client.upsert(this.collectionName, {
-        wait: true,
-        points: vectors.map((v) => ({
-          id: v.id,
-          vector: v.vector,
-          payload: v.payload as unknown as Record<string, unknown>,
-        })),
-      });
-      logger.info(`Upserted ${vectors.length} vectors to Qdrant`);
+      await this.upsertBreaker.fire(vectors);
     } catch (error: any) {
       logger.error("Full Qdrant Error object:", JSON.stringify(error, null, 2));
       if (error?.data) {
@@ -36,8 +72,29 @@ export class VectorService {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       logger.error(`Failed to upsert vectors: ${errorMessage}`, error);
-      throw new Error(`Failed to store vectors: ${errorMessage}`);
+      throw error;
     }
+  }
+
+  private async similaritySearchInternal(
+    queryVector: number[],
+    userId: string,
+    k: number = 5,
+  ): Promise<SearchResult[]> {
+    const results = await this.client.search(this.collectionName, {
+      vector: queryVector,
+      limit: k,
+      filter: {
+        must: [{ key: "userId", match: { value: userId } }],
+      },
+      with_payload: true,
+    });
+
+    return results.map((result) => ({
+      id: result.id as string,
+      score: result.score,
+      payload: result.payload as unknown as VectorPayload,
+    }));
   }
 
   async similaritySearch(
@@ -46,29 +103,17 @@ export class VectorService {
     k: number = 5,
   ): Promise<SearchResult[]> {
     try {
-      const results = await this.client.search(this.collectionName, {
-        vector: queryVector,
-        limit: k,
-        filter: {
-          must: [{ key: "userId", match: { value: userId } }],
-        },
-        with_payload: true,
-      });
-
-      return results.map((result) => ({
-        id: result.id as string,
-        score: result.score,
-        payload: result.payload as unknown as VectorPayload,
-      }));
+      return (await this.searchBreaker.fire(
+        queryVector,
+        userId,
+        k,
+      )) as SearchResult[];
     } catch (error: any) {
       logger.error("Similarity search failed:", error);
       if (error?.data) {
         logger.error("Qdrant error data:", JSON.stringify(error.data, null, 2));
       }
-      // Re-throw the original error or a more descriptive one
-      throw new Error(
-        `Failed to search vectors: ${error.message || "Unknown error"}`,
-      );
+      throw error;
     }
   }
 

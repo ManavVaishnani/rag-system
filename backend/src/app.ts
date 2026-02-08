@@ -4,12 +4,13 @@ import helmet from "helmet";
 import timeout from "connect-timeout";
 import { config } from "./config";
 import { apiRateLimiter } from "./middleware/rate-limit.middleware";
+import { requestIdMiddleware } from "./middleware/request-id.middleware";
 import {
   errorHandler,
   notFoundHandler,
   timeoutErrorHandler,
 } from "./middleware/validation.middleware";
-import { logger } from "./utils/logger";
+import { getRequestLogger } from "./utils/logger";
 
 // Import routes
 import authRoutes from "./routes/auth.routes";
@@ -30,6 +31,9 @@ app.use(
   }),
 );
 
+// Request ID middleware (early to ensure all logs have request context)
+app.use(requestIdMiddleware);
+
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -46,9 +50,10 @@ app.use((req, res, next) => {
   }
 });
 
-// Request logging
+// Request logging with request context
 app.use((req, _res, next) => {
-  logger.debug(`${req.method} ${req.path}`);
+  const requestLogger = getRequestLogger(req.requestId);
+  requestLogger.debug(`${req.method} ${req.path}`);
   next();
 });
 

@@ -4,19 +4,21 @@ import { config } from "../config";
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.errors({ stack: true }),
-  winston.format.printf(({ level, message, timestamp, stack }) => {
+  winston.format.printf(({ level, message, timestamp, stack, requestId }) => {
+    const requestIdStr = requestId ? `[${requestId}] ` : "";
     if (stack) {
-      return `${timestamp} [${level.toUpperCase()}]: ${message}\n${stack}`;
+      return `${timestamp} [${level.toUpperCase()}]: ${requestIdStr}${message}\n${stack}`;
     }
-    return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+    return `${timestamp} [${level.toUpperCase()}]: ${requestIdStr}${message}`;
   }),
 );
 
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  winston.format.printf(({ level, message, timestamp }) => {
-    return `${timestamp} ${level}: ${message}`;
+  winston.format.printf(({ level, message, timestamp, requestId }) => {
+    const requestIdStr = requestId ? `[${requestId}] ` : "";
+    return `${timestamp} ${level}: ${requestIdStr}${message}`;
   }),
 );
 
@@ -47,4 +49,18 @@ if (config.server.nodeEnv === "production") {
       maxFiles: 5,
     }),
   );
+}
+
+/**
+ * Get a logger with request context
+ * @param requestId - The request ID to include in log entries
+ * @returns A child logger with the request ID in metadata
+ */
+export function getRequestLogger(
+  requestId: string | undefined,
+): winston.Logger {
+  if (requestId) {
+    return logger.child({ requestId });
+  }
+  return logger;
 }
