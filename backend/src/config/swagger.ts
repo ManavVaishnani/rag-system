@@ -3,7 +3,7 @@ export const swaggerSpec = {
   info: {
     title: "RAG System API",
     description:
-      "A production-ready Retrieval-Augmented Generation (RAG) system API powered by Google's Gemini and Qdrant vector database. Upload documents, query them using natural language, and get AI-powered responses with source citations.",
+      "A production-ready Retrieval-Augmented Generation (RAG) system API powered by Google's Gemini and Qdrant vector database. Upload documents, query them using natural language, and get AI-powered responses with source citations.\n\n## Monitoring\n\nPrometheus metrics are exposed on a separate port (default: 9090) at `http://localhost:9090/metrics`. Metrics include HTTP request duration, external API calls (Gemini, Qdrant), business metrics (documents, queries), Redis operations, and circuit breaker states.",
     version: "1.0.0",
     contact: {
       name: "API Support",
