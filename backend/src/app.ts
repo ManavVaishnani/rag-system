@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import timeout from "connect-timeout";
+import swaggerUi from "swagger-ui-express";
 import { config } from "./config";
+import { swaggerSpec } from "./config/swagger";
 import { apiRateLimiter } from "./middleware/rate-limit.middleware";
 import { requestIdMiddleware } from "./middleware/request-id.middleware";
 import {
@@ -59,6 +61,17 @@ app.use((req, _res, next) => {
 
 // Health check (comprehensive)
 app.use("/health", healthRoutes);
+
+// API documentation
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "RAG System API Documentation",
+  }),
+);
 
 // API routes
 app.use("/api/auth", authRoutes);
