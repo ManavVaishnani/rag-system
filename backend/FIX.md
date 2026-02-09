@@ -144,33 +144,87 @@ Add request correlation IDs for better debugging:
 
 ---
 
-### 7. Prometheus Metrics
+### 7. Prometheus Metrics ✅
 
-**Priority**: Medium  
-**Effort**: ~1 hour
+**Status**: COMPLETED
 
 Add observability with Prometheus:
 
-- Request duration histograms
-- Error rate counters
-- External API call metrics (Gemini, Qdrant)
-- Business metrics (documents processed, queries, etc.)
+- ✅ Request duration histograms (parameterized routes)
+- ✅ Error rate counters
+- ✅ External API call metrics (Gemini embedding, Gemini LLM, Qdrant)
+- ✅ Business metrics (documents processed, queries with cache hit/miss)
+- ✅ Circuit breaker state tracking
+- ✅ Redis operations metrics (get/set/delete with hit/miss)
+- ✅ Metrics server on separate port (9090)
+- ✅ HTTP request tracking middleware
 
 **Package**: `prom-client`
 
+**Configuration**:
+
+- Environment variables: `METRICS_ENABLED`, `METRICS_PORT`
+- Default port: 9090 (separate from API port 3001)
+- Metrics endpoint: `http://localhost:9090/metrics`
+
+**Metrics Collected**:
+
+| Metric                              | Type      | Labels                     | Description            |
+| ----------------------------------- | --------- | -------------------------- | ---------------------- |
+| `http_request_duration_seconds`     | Histogram | method, route, status_code | HTTP request latency   |
+| `http_requests_total`               | Counter   | method, route, status_code | Total HTTP requests    |
+| `gemini_embedding_requests_total`   | Counter   | status                     | Gemini embedding calls |
+| `gemini_embedding_duration_seconds` | Histogram | status                     | Embedding latency      |
+| `gemini_llm_requests_total`         | Counter   | status                     | Gemini LLM calls       |
+| `gemini_llm_duration_seconds`       | Histogram | status                     | LLM latency            |
+| `qdrant_requests_total`             | Counter   | operation, status          | Qdrant operations      |
+| `qdrant_duration_seconds`           | Histogram | operation, status          | Qdrant latency         |
+| `documents_processed_total`         | Counter   | status                     | Documents processed    |
+| `documents_uploaded_total`          | Counter   | -                          | Document uploads       |
+| `queries_total`                     | Counter   | cache                      | Queries (hit/miss)     |
+| `conversations_created_total`       | Counter   | -                          | New conversations      |
+| `redis_operations_total`            | Counter   | operation, result          | Redis operations       |
+| `circuit_breaker_state`             | Gauge     | service                    | Circuit breaker state  |
+
+**Files Created/Modified**:
+
+- `src/config/metrics.ts` (new)
+- `src/services/metrics.service.ts` (new)
+- `src/middleware/metrics.middleware.ts` (new)
+- `src/metrics-server.ts` (new)
+- `src/config/index.ts` (add metrics config)
+- `.env.example` (add metrics env vars)
+- `src/server.ts` (start metrics server)
+- `src/app.ts` (add metrics middleware)
+- Multiple service files instrumented
+
 ---
 
-### 8. API Documentation (Swagger/OpenAPI)
+### 8. API Documentation (Swagger/OpenAPI) ✅
 
-**Priority**: Low  
-**Effort**: ~1 hour
+**Status**: COMPLETED
 
 Add interactive API documentation:
 
-- Install `swagger-ui-express`
-- Document all endpoints
-- Add authentication documentation
-- Host at `/api-docs`
+- ✅ Install `swagger-ui-express`
+- ✅ Document all endpoints
+- ✅ Add authentication documentation (JWT Bearer token)
+- ✅ Host at `/api-docs`
+
+**Features**:
+
+- Complete OpenAPI 3.0.3 specification
+- 24+ documented endpoints across 6 categories
+- Interactive Swagger UI with request/response examples
+- JWT Bearer authentication support
+- File upload support for document uploads
+- Comprehensive schemas for all data models
+
+**Files Created/Modified**:
+
+- `src/config/swagger.ts` (new)
+- `src/app.ts` (added swagger-ui-express middleware)
+- `package.json` (added swagger-ui-express dependency)
 
 ---
 

@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 import { logger } from "../utils/logger";
+import { metrics } from "./metrics.service";
 import {
   createCircuitBreaker,
   CircuitBreakerConfigs,
@@ -44,9 +45,13 @@ export class EmbeddingService {
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
+    const start = Date.now();
     try {
-      return (await this.embeddingBreaker.fire(text)) as number[];
+      const result = (await this.embeddingBreaker.fire(text)) as number[];
+      metrics.recordGeminiEmbedding("success", Date.now() - start);
+      return result;
     } catch (error) {
+      metrics.recordGeminiEmbedding("error", Date.now() - start);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       logger.error(`Embedding generation failed: ${errorMessage}`, error);

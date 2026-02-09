@@ -23,6 +23,8 @@ const envSchema = z.object({
   QDRANT_COLLECTION_NAME: z.string().default("rag-documents"),
   MAX_FILE_SIZE: z.string().default("10485760"),
   UPLOAD_DIR: z.string().default("./uploads"),
+  METRICS_ENABLED: z.string().default("true"),
+  METRICS_PORT: z.string().default("9090"),
 });
 
 const parseEnv = () => {
@@ -89,5 +91,9 @@ export const config = {
   cache: {
     queryTtl: 3600, // 1 hour
     semanticThreshold: 0.95,
+  },
+  metrics: {
+    enabled: env.METRICS_ENABLED === "true",
+    port: parseInt(env.METRICS_PORT, 10),
   },
 };

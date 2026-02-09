@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 import { logger } from "../utils/logger";
+import { metrics } from "./metrics.service";
 import {
   createCircuitBreaker,
   CircuitBreakerConfigs,
@@ -78,9 +79,13 @@ export class LLMService {
   }
 
   async generateResponse(query: string, context: string[]): Promise<string> {
+    const start = Date.now();
     try {
-      return (await this.llmBreaker.fire(query, context)) as string;
+      const result = (await this.llmBreaker.fire(query, context)) as string;
+      metrics.recordGeminiLLM("success", Date.now() - start);
+      return result;
     } catch (error) {
+      metrics.recordGeminiLLM("error", Date.now() - start);
       logger.error("LLM generation failed:", error);
       throw error;
     }

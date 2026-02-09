@@ -1,6 +1,7 @@
 import { getQdrantClient } from "../config/qdrant";
 import { config } from "../config";
 import { logger } from "../utils/logger";
+import { metrics } from "./metrics.service";
 import { VectorData, SearchResult, VectorPayload } from "../types";
 import {
   createCircuitBreaker,
@@ -62,9 +63,12 @@ export class VectorService {
   }
 
   async upsertVectors(vectors: VectorData[]): Promise<void> {
+    const start = Date.now();
     try {
       await this.upsertBreaker.fire(vectors);
+      metrics.recordQdrantOperation("upsert", "success", Date.now() - start);
     } catch (error: any) {
+      metrics.recordQdrantOperation("upsert", "error", Date.now() - start);
       logger.error("Full Qdrant Error object:", JSON.stringify(error, null, 2));
       if (error?.data) {
         logger.error("Qdrant error data:", JSON.stringify(error.data, null, 2));
@@ -102,13 +106,17 @@ export class VectorService {
     userId: string,
     k: number = 5,
   ): Promise<SearchResult[]> {
+    const start = Date.now();
     try {
-      return (await this.searchBreaker.fire(
+      const result = (await this.searchBreaker.fire(
         queryVector,
         userId,
         k,
       )) as SearchResult[];
+      metrics.recordQdrantOperation("search", "success", Date.now() - start);
+      return result;
     } catch (error: any) {
+      metrics.recordQdrantOperation("search", "error", Date.now() - start);
       logger.error("Similarity search failed:", error);
       if (error?.data) {
         logger.error("Qdrant error data:", JSON.stringify(error.data, null, 2));
@@ -118,6 +126,7 @@ export class VectorService {
   }
 
   async deleteByDocumentId(documentId: string): Promise<void> {
+    const start = Date.now();
     try {
       await this.client.delete(this.collectionName, {
         wait: true,
@@ -125,14 +134,17 @@ export class VectorService {
           must: [{ key: "documentId", match: { value: documentId } }],
         },
       });
+      metrics.recordQdrantOperation("delete", "success", Date.now() - start);
       logger.info(`Deleted vectors for document: ${documentId}`);
     } catch (error) {
+      metrics.recordQdrantOperation("delete", "error", Date.now() - start);
       logger.error("Failed to delete vectors:", error);
       throw new Error("Failed to delete vectors");
     }
   }
 
   async deleteByUserId(userId: string): Promise<void> {
+    const start = Date.now();
     try {
       await this.client.delete(this.collectionName, {
         wait: true,
@@ -140,21 +152,26 @@ export class VectorService {
           must: [{ key: "userId", match: { value: userId } }],
         },
       });
+      metrics.recordQdrantOperation("delete", "success", Date.now() - start);
       logger.info(`Deleted all vectors for user: ${userId}`);
     } catch (error) {
+      metrics.recordQdrantOperation("delete", "error", Date.now() - start);
       logger.error("Failed to delete user vectors:", error);
       throw new Error("Failed to delete user vectors");
     }
   }
 
   async deleteAllVectors(): Promise<void> {
+    const start = Date.now();
     try {
       await this.client.delete(this.collectionName, {
         wait: true,
         filter: {},
       });
+      metrics.recordQdrantOperation("delete", "success", Date.now() - start);
       logger.info("Deleted all vectors from collection");
     } catch (error) {
+      metrics.recordQdrantOperation("delete", "error", Date.now() - start);
       logger.error("Failed to delete all vectors:", error);
       throw new Error("Failed to delete all vectors");
     }

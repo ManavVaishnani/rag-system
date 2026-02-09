@@ -7,6 +7,7 @@ import { connectRedis, disconnectRedis } from "./config/redis";
 import { ensureQdrantCollection } from "./config/qdrant";
 import { logger } from "./utils/logger";
 import { setupWebSocket } from "./utils/websocket";
+import { startMetricsServer } from "./metrics-server";
 
 const server = http.createServer(app);
 
@@ -31,7 +32,10 @@ async function startServer(): Promise<void> {
     logger.info("Ensuring Qdrant collection...");
     await ensureQdrantCollection();
 
-    // Start server
+    // Start metrics server on separate port
+    startMetricsServer();
+
+    // Start main server
     server.listen(config.server.port, () => {
       logger.info(`Server running on port ${config.server.port}`);
       logger.info(`Environment: ${config.server.nodeEnv}`);

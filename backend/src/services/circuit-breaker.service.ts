@@ -1,5 +1,6 @@
 import CircuitBreaker from "opossum";
 import { logger } from "../utils/logger";
+import { metrics } from "./metrics.service";
 
 export interface CircuitBreakerConfig {
   name: string;
@@ -70,14 +71,17 @@ export function createCircuitBreaker<
   // Event listeners for monitoring
   breaker.on("open", () => {
     logger.warn(`Circuit breaker '${config.name}' opened`);
+    metrics.setCircuitBreakerState(config.name, "open");
   });
 
   breaker.on("halfOpen", () => {
     logger.info(`Circuit breaker '${config.name}' half-open (testing)`);
+    metrics.setCircuitBreakerState(config.name, "half-open");
   });
 
   breaker.on("close", () => {
     logger.info(`Circuit breaker '${config.name}' closed (healthy)`);
+    metrics.setCircuitBreakerState(config.name, "closed");
   });
 
   breaker.on("fallback", (result) => {

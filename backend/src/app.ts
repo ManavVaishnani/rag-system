@@ -12,6 +12,7 @@ import {
   notFoundHandler,
   timeoutErrorHandler,
 } from "./middleware/validation.middleware";
+import { metricsMiddleware } from "./middleware/metrics.middleware";
 import { getRequestLogger } from "./utils/logger";
 
 // Import routes
@@ -58,6 +59,9 @@ app.use((req, _res, next) => {
   requestLogger.debug(`${req.method} ${req.path}`);
   next();
 });
+
+// Metrics middleware (tracks HTTP request duration and count)
+app.use(metricsMiddleware);
 
 // Health check (comprehensive)
 app.use("/health", healthRoutes);

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/database";
 import { logger } from "../utils/logger";
+import { metrics } from "../services/metrics.service";
 
 export class ConversationController {
   async create(req: Request, res: Response): Promise<void> {
@@ -14,6 +15,9 @@ export class ConversationController {
           title: title || "New Conversation",
         },
       });
+
+      // Record conversation creation metric
+      metrics.recordConversationCreated();
 
       res.status(201).json({
         success: true,

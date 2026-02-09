@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/database";
 import { logger } from "../utils/logger";
+import { metrics } from "../services/metrics.service";
 import { getEmbeddingService } from "../services/embedding.service";
 import { getVectorService } from "../services/vector.service";
 import { getLLMService } from "../services/llm.service";
@@ -35,6 +36,9 @@ export class QueryController {
       // Check semantic cache first
       const cached = await cacheService.semanticSearch(query, userId);
       if (cached) {
+        // Record cache hit metric
+        metrics.recordQuery(true);
+
         // Even for cached responses, save to conversation
         await this.saveToConversation(
           activeConversationId,
@@ -55,6 +59,9 @@ export class QueryController {
         });
         return;
       }
+
+      // Record cache miss metric
+      metrics.recordQuery(false);
 
       // Generate query embedding
       const queryEmbedding = await embeddingService.generateEmbedding(query);

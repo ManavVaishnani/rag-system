@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { prisma } from "../config/database";
 import { logger } from "../utils/logger";
+import { metrics } from "../services/metrics.service";
 import { getDocumentParserService } from "../services/document-parser.service";
 import { getChunkingService } from "../services/chunking.service";
 import { getEmbeddingService } from "../services/embedding.service";
@@ -21,6 +22,9 @@ export class DocumentController {
     let documentId: string | null = null;
 
     try {
+      // Record document upload metric
+      metrics.recordDocumentUploaded();
+
       // Create document record
       const document = await prisma.document.create({
         data: {
@@ -158,6 +162,8 @@ export class DocumentController {
         },
       });
 
+      // Record successful document processing
+      metrics.recordDocumentProcessed("completed");
       logger.info(`Document processed successfully: ${documentId}`);
     } catch (error) {
       logger.error(`Document processing failed: ${documentId}`, error);
@@ -171,6 +177,9 @@ export class DocumentController {
             error instanceof Error ? error.message : "Unknown error",
         },
       });
+
+      // Record failed document processing
+      metrics.recordDocumentProcessed("failed");
     } finally {
       // Clean up uploaded file
       await parserService.deleteFile(filePath);
