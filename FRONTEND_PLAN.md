@@ -790,6 +790,7 @@ rag-system/
     │   ├── types/
     │   │   ├── api.types.ts
     │   │   ├── auth.types.ts
+    │   │   ├── auth.validation.ts   # NEW: Zod schemas for auth forms
     │   │   ├── chat.types.ts
     │   │   └── document.types.ts
     │   ├── App.tsx
@@ -808,34 +809,34 @@ rag-system/
 ## 10. Implementation Phases
 
 ### Phase 1: Project Setup (1-2 hours)
-- [ ] Initialize Vite project with React + TypeScript
-- [ ] Install Tailwind CSS v4.1 with @tailwindcss/vite
-- [ ] Configure CSS with OKLCH colors and dark mode
-- [ ] Setup TypeScript path aliases (@/src)
-- [ ] Initialize shadcn/ui with Neutral base color
-- [ ] Install all core dependencies
-- [ ] Create folder structure
+- [x] Initialize Vite project with React + TypeScript
+- [x] Install Tailwind CSS v4.1 with @tailwindcss/vite
+- [x] Configure CSS with OKLCH colors and dark mode
+- [x] Setup TypeScript path aliases (@/src)
+- [x] Initialize shadcn/ui with Neutral base color
+- [x] Install all core dependencies
+- [x] Create folder structure
 - [ ] Setup ESLint and Prettier (optional)
 
 ### Phase 2: Core Infrastructure (2-3 hours)
-- [ ] Create API service layer with Axios
-- [ ] Setup request/response interceptors
-- [ ] Configure JWT token handling and refresh
-- [ ] Setup Zustand stores (auth, chat, documents)
-- [ ] Configure React Router with protected routes
-- [ ] Create ThemeProvider (dark mode - forced)
-- [ ] Setup TanStack Query provider
-- [ ] Build layout components (AppLayout, Sidebar, Header)
+- [x] Create API service layer with Axios
+- [x] Setup request/response interceptors
+- [x] Configure JWT token handling and refresh
+- [x] Setup Zustand stores (auth, chat, documents)
+- [x] Configure React Router with protected routes
+- [x] Create ThemeProvider (dark mode - forced)
+- [x] Setup TanStack Query provider
+- [x] Build layout components (AppLayout, Sidebar, Header)
 
 ### Phase 3: Authentication (2-3 hours)
-- [ ] Build LoginPage with form validation (Zod + React Hook Form)
-- [ ] Build RegisterPage with form validation
-- [ ] Implement auth service methods (login, register, logout)
-- [ ] Connect auth store to UI components
-- [ ] Add protected route guards (redirect to login)
-- [ ] Add logout functionality in header
-- [ ] Add loading states and error handling
-- [ ] Test authentication flow end-to-end
+- [x] Build LoginPage with form validation (Zod + React Hook Form)
+- [x] Build RegisterPage with form validation (including password strength indicator)
+- [x] Implement auth service methods (login, register, logout)
+- [x] Connect auth store to UI components
+- [x] Add protected route guards (redirect to login)
+- [x] Add logout functionality in header
+- [x] Add loading states and error handling (including skeleton route loading state)
+- [x] Test authentication flow end-to-end (happy paths and basic error cases)
 
 ### Phase 4: Document Management (3-4 hours)
 - [ ] Build DocumentsPage layout with grid
@@ -1066,6 +1067,7 @@ Show completion or error state
 - **Form validation**: Zod + React Hook Form for input validation
 - **File validation**: Client-side before upload (size, type, count)
 - **Fallback UI**: Skeleton loaders and empty states
+ - **Auth redirect**: On token refresh failure, clear auth state and perform SPA navigation back to `/login`
 
 ### Chat Upload Constraints
 ```typescript
@@ -1327,17 +1329,13 @@ export interface Document {
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: 2026-02-10  
-**Status**: Ready for Implementation
+**Document Version**: 3.0  
+**Last Updated**: 2026-02-12  
+**Status**: In Progress (Phases 1–3 implemented)
 
-**Key Updates in v2.0**:
-- Added Chat-Integrated Document Upload feature (Section 6)
-- Multiple file upload support (max 10 files)
-- 10 MB file size limit per file
-- Global document availability across all conversations
-- Real-time sync between Chat and Documents modules
-- New components: AttachmentButton, FilePreviewChips, DocumentChip
-- Updated store interfaces with chat upload tracking
-- Extended Phase 6 for chat upload implementation
-- Updated testing checklist for upload features
+**Key Updates in v3.0**:
+- Marked Phases 1 and 2 as completed based on core infrastructure implementation
+- Completed Phase 3 Authentication with React Hook Form + Zod forms for login/register
+- Added password strength indicator and improved auth error handling/clearing
+- Introduced skeleton-based route loading state for protected/public routes
+- Implemented SPA-friendly auth redirect on token refresh failure via `auth-redirect` helper

@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/auth-store';
+import { triggerAuthRedirect } from '@/lib/auth-redirect';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -93,9 +94,9 @@ apiClient.interceptors.response.use(
       }
       return apiClient(originalRequest);
     } catch (refreshError) {
-      // Refresh failed, logout user
+      // Refresh failed, logout user and redirect to login
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      triggerAuthRedirect();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

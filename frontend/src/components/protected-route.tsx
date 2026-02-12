@@ -2,9 +2,26 @@ import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+}
+
+function RouteLoadingScreen() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-full max-w-3xl px-4">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-40 rounded-lg bg-muted" />
+          <div className="grid gap-4 md:grid-cols-[260px,1fr]">
+            <Skeleton className="h-64 rounded-xl bg-muted" />
+            <Skeleton className="h-64 rounded-xl bg-muted" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -15,11 +32,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [checkAuth]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <RouteLoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -41,11 +54,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
   }, [checkAuth]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <RouteLoadingScreen />;
   }
 
   if (isAuthenticated) {
