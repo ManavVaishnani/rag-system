@@ -3,6 +3,7 @@ import { FileText, Plus, RefreshCw } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { DocumentUpload } from '@/components/documents/document-upload';
 import { DocumentList } from '@/components/documents/document-list';
+import { DocumentViewer } from '@/components/documents/document-viewer';
 import { UploadProgress } from '@/components/documents/upload-progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -35,6 +36,8 @@ export function DocumentsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
   const [showUploadZone, setShowUploadZone] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [documentToView, setDocumentToView] = useState<string | null>(null);
 
   // Fetch documents on mount
   useEffect(() => {
@@ -83,9 +86,9 @@ export function DocumentsPage() {
     );
 
     try {
-      const uploadedDocs = await uploadDocuments(files, 'documents');
+      const success = await uploadDocuments(files, 'documents');
 
-      if (uploadedDocs.length > 0) {
+      if (success) {
         // Mark as completed
         setUploads((prev) =>
           prev.map((u) => ({
@@ -95,7 +98,7 @@ export function DocumentsPage() {
           }))
         );
 
-        toast.success(`Successfully uploaded ${uploadedDocs.length} ${uploadedDocs.length === 1 ? 'file' : 'files'}`);
+        toast.success(`Successfully uploaded ${files.length} ${files.length === 1 ? 'file' : 'files'}`);
 
         // Clear uploads after a delay
         setTimeout(() => {
@@ -112,13 +115,13 @@ export function DocumentsPage() {
           }))
         );
       }
-    } catch (err) {
+    } catch (_error) {
       // Mark as error
       setUploads((prev) =>
         prev.map((u) => ({
           ...u,
           status: 'error',
-          error: err instanceof Error ? err.message : 'Upload failed',
+          error: _error instanceof Error ? _error.message : 'Upload failed',
         }))
       );
     }
@@ -146,11 +149,13 @@ export function DocumentsPage() {
 
   // Handle document view
   const handleView = (id: string) => {
-    // In the future, this could open a document viewer
-    const doc = documents.find((d) => d.id === id);
-    if (doc) {
-      toast.info(`Viewing: ${doc.originalName}`);
-    }
+    setDocumentToView(id);
+    setViewerOpen(true);
+  };
+
+  const handleCloseViewer = () => {
+    setViewerOpen(false);
+    setDocumentToView(null);
   };
 
   return (
@@ -260,6 +265,13 @@ export function DocumentsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Document Viewer */}
+        <DocumentViewer
+          documentId={documentToView}
+          isOpen={viewerOpen}
+          onClose={handleCloseViewer}
+        />
       </div>
     </AppLayout>
   );

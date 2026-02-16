@@ -1,14 +1,14 @@
 import { apiClient, handleApiError } from '@/lib/axios';
-import type { Conversation, Message } from '@/types';
+import type { Conversation, Message, ApiResponse } from '@/types';
 import { AxiosError } from 'axios';
 
 export const conversationService = {
   async createConversation(): Promise<Conversation> {
     try {
-      const response = await apiClient.post<{ conversation: Conversation }>('/conversations', {
+      const response = await apiClient.post<ApiResponse<{ conversation: Conversation }>>('/conversations', {
         title: 'New Conversation',
       });
-      return response.data.conversation;
+      return response.data.data.conversation;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }
@@ -16,8 +16,8 @@ export const conversationService = {
 
   async getConversations(): Promise<Conversation[]> {
     try {
-      const response = await apiClient.get<{ conversations: Conversation[] }>('/conversations');
-      return response.data.conversations;
+      const response = await apiClient.get<ApiResponse<{ conversations: Conversation[] }>>('/conversations');
+      return response.data.data.conversations;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }
@@ -25,8 +25,8 @@ export const conversationService = {
 
   async getConversation(id: string): Promise<{ conversation: Conversation; messages: Message[] }> {
     try {
-      const response = await apiClient.get(`/conversations/${id}`);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<{ conversation: Conversation; messages: Message[] }>>(`/conversations/${id}`);
+      return response.data.data;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }
@@ -34,10 +34,10 @@ export const conversationService = {
 
   async updateConversation(id: string, title: string): Promise<Conversation> {
     try {
-      const response = await apiClient.patch<{ conversation: Conversation }>(`/conversations/${id}`, {
+      const response = await apiClient.patch<ApiResponse<{ conversation: Conversation }>>(`/conversations/${id}`, {
         title,
       });
-      return response.data.conversation;
+      return response.data.data.conversation;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }

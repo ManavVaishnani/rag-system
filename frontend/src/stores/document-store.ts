@@ -12,8 +12,8 @@ interface DocumentState {
 
   // Actions
   fetchDocuments: () => Promise<void>;
-  uploadDocument: (file: File, source?: 'chat' | 'documents') => Promise<Document | null>;
-  uploadDocuments: (files: File[], source?: 'chat' | 'documents') => Promise<Document[]>;
+  uploadDocument: (file: File, source?: 'chat' | 'documents') => Promise<boolean>;
+  uploadDocuments: (files: File[], source?: 'chat' | 'documents') => Promise<boolean>;
   deleteDocument: (id: string) => Promise<void>;
   getDocumentStatus: (id: string) => Promise<void>;
   syncChatUploads: (document: Document) => void;
@@ -53,56 +53,56 @@ export const useDocumentStore = create<DocumentState>()((set) => ({
         }));
       }, 200);
 
-      const documents = await documentService.uploadDocuments([file], source);
+      await documentService.uploadDocument(file, source);
 
       clearInterval(progressInterval);
       set({ uploadProgress: 100 });
 
-      const newDoc = documents[0];
-      set((state) => ({
-        documents: [newDoc, ...state.documents],
-        isUploading: false,
-      }));
+      // Refetch documents to get the new one with full data
+      const documents = await documentService.getDocuments();
+      set({ documents, isUploading: false });
 
-      return newDoc;
+      return true;
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to upload document',
         isUploading: false,
         uploadProgress: 0,
       });
-      return null;
+      return false;
     }
   },
 
-  // Upload multiple documents
+  // Upload multiple documents (uploads one by one)
   uploadDocuments: async (files, source = 'documents') => {
     set({ isUploading: true, uploadProgress: 0, error: null });
     try {
-      const progressInterval = setInterval(() => {
-        set((state) => ({
-          uploadProgress: Math.min(state.uploadProgress + 5, 90),
-        }));
-      }, 300);
+      const progressPerFile = 90 / files.length;
+      let completedFiles = 0;
 
-      const documents = await documentService.uploadDocuments(files, source);
+      // Upload files one by one since backend only accepts single file
+      for (const file of files) {
+        await documentService.uploadDocument(file, source);
+        completedFiles++;
+        set({
+          uploadProgress: Math.min(completedFiles * progressPerFile, 90),
+        });
+      }
 
-      clearInterval(progressInterval);
       set({ uploadProgress: 100 });
 
-      set((state) => ({
-        documents: [...documents, ...state.documents],
-        isUploading: false,
-      }));
+      // Refetch documents to get all new ones with full data
+      const documents = await documentService.getDocuments();
+      set({ documents, isUploading: false });
 
-      return documents;
+      return true;
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to upload documents',
         isUploading: false,
         uploadProgress: 0,
       });
-      return [];
+      return false;
     }
   },
 

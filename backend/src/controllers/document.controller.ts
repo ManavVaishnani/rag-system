@@ -261,6 +261,58 @@ export class DocumentController {
     }
   }
 
+  async getContent(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const userId = req.user!.userId;
+
+      // Verify document belongs to user and get chunks
+      const document = await prisma.document.findFirst({
+        where: { id, userId },
+        include: {
+          chunks: {
+            orderBy: { chunkIndex: "asc" },
+            select: {
+              id: true,
+              content: true,
+              chunkIndex: true,
+              metadata: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      if (!document) {
+        res.status(404).json({ error: "Document not found" });
+        return;
+      }
+
+      if (document.status !== "COMPLETED") {
+        res.status(400).json({ error: "Document is still being processed" });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          document: {
+            id: document.id,
+            originalName: document.originalName,
+            mimeType: document.mimeType,
+            fileSize: document.fileSize,
+            chunkCount: document.chunkCount,
+            createdAt: document.createdAt,
+          },
+          chunks: document.chunks,
+        },
+      });
+    } catch (error) {
+      logger.error("Get document content failed:", error);
+      res.status(500).json({ error: "Failed to get document content" });
+    }
+  }
+
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;

@@ -87,7 +87,7 @@ export function DocumentCard({ document, onDelete, onView }: DocumentCardProps) 
                   {extension}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {formatFileSize(document.size)}
+                  {formatFileSize(document.size || document.fileSize || 0)}
                 </span>
               </div>
             </div>

@@ -232,30 +232,29 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     });
 
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        pendingAttachments
-          .filter((a) => a.status === 'uploading')
-          .forEach((attachment) => {
-            if (attachment.progress < 90) {
-              get().updateAttachmentProgress(attachment.id, attachment.progress + 10);
-            }
-          });
-      }, 200);
-
-      const documents = await documentService.uploadDocuments(filesToUpload, 'chat');
-
-      clearInterval(progressInterval);
-
-      // Update attachments as completed
-      documents.forEach((doc, index) => {
-        const file = filesToUpload[index];
+      // Upload files one by one since backend only accepts single file
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
         const attachment = pendingAttachments.find((a) => a.file === file);
-        if (attachment) {
-          get().updateAttachmentStatus(attachment.id, 'completed', doc.id);
+        
+        if (!attachment) continue;
+
+        try {
+          const response = await documentService.uploadDocument(file, 'chat');
+          
+          // Update as completed
+          get().updateAttachmentStatus(attachment.id, 'completed', response.id);
           get().updateAttachmentProgress(attachment.id, 100);
+        } catch (fileError) {
+          // Mark this specific attachment as error
+          get().updateAttachmentStatus(
+            attachment.id,
+            'error',
+            undefined,
+            fileError instanceof Error ? fileError.message : 'Upload failed'
+          );
         }
-      });
+      }
     } catch (error) {
       // Mark all uploading attachments as error
       pendingAttachments

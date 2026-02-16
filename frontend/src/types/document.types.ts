@@ -6,12 +6,13 @@ export interface Document {
   originalName: string;
   mimeType: string;
   size: number;
+  fileSize?: number;  // Backend uses fileSize
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
   source: 'chat' | 'documents';
   errorMessage?: string;
   chunkCount?: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface UploadProgress {
@@ -30,4 +31,24 @@ export interface DocumentStatusResponse {
   status: Document['status'];
   chunkCount?: number;
   errorMessage?: string;
+}
+
+export interface DocumentChunk {
+  id: string;
+  content: string;
+  chunkIndex: number;
+  metadata?: object;
+  createdAt: string;
+}
+
+export interface DocumentContentResponse {
+  document: {
+    id: string;
+    originalName: string;
+    mimeType: string;
+    fileSize: number;
+    chunkCount: number;
+    createdAt: string;
+  };
+  chunks: DocumentChunk[];
 }

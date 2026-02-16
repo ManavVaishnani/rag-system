@@ -61,6 +61,9 @@ router.get("/", (req, res) => documentController.list(req, res));
 // Get document status
 router.get("/:id/status", (req, res) => documentController.getStatus(req, res));
 
+// Get document content (chunks)
+router.get("/:id/content", (req, res) => documentController.getContent(req, res));
+
 // Delete document
 router.delete("/:id", (req, res) => documentController.delete(req, res));
 

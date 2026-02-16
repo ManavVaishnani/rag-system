@@ -1,5 +1,5 @@
 import { apiClient, handleApiError } from '@/lib/axios';
-import type { Message } from '@/types';
+import type { Message, ApiResponse } from '@/types';
 import { AxiosError } from 'axios';
 
 export interface QueryRequest {
@@ -21,8 +21,8 @@ export interface QueryResponse {
 export const chatService = {
   async sendQuery(request: QueryRequest): Promise<QueryResponse> {
     try {
-      const response = await apiClient.post<QueryResponse>('/query', request);
-      return response.data;
+      const response = await apiClient.post<ApiResponse<QueryResponse>>('/query', request);
+      return response.data.data;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }
