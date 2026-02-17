@@ -160,7 +160,8 @@ export function DocumentsPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="h-full overflow-auto p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -272,6 +273,7 @@ export function DocumentsPage() {
           isOpen={viewerOpen}
           onClose={handleCloseViewer}
         />
+      </div>
       </div>
     </AppLayout>
   );
