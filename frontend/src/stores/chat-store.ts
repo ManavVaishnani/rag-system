@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Conversation, Message, PendingAttachment, Source } from '@/types';
 import { conversationService } from '@/services/conversation.service';
 import { documentService } from '@/services/document.service';
+import { useDocumentStore } from '@/stores/document-store';
 
 interface ChatState {
   // Conversations
@@ -239,13 +240,68 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         
         if (!attachment) continue;
 
+        // Simulate progress during upload
+        const progressInterval = setInterval(() => {
+          const current = get().pendingAttachments.find((a) => a.id === attachment.id);
+          if (current && current.progress < 85) {
+            get().updateAttachmentProgress(attachment.id, current.progress + 15);
+          }
+        }, 300);
+
         try {
           const response = await documentService.uploadDocument(file, 'chat');
+          clearInterval(progressInterval);
           
           // Update as completed
           get().updateAttachmentStatus(attachment.id, 'completed', response.id);
           get().updateAttachmentProgress(attachment.id, 100);
+
+          // Sync to document store so it appears on Documents page
+          const docStore = useDocumentStore.getState();
+          docStore.syncChatUploads({
+            id: response.id,
+            userId: '',
+            filename: response.filename || file.name,
+            originalName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            status: 'PROCESSING',
+            source: 'chat',
+            createdAt: new Date().toISOString(),
+          });
+
+          // Poll for status updates
+          const pollStatus = async () => {
+            let attempts = 0;
+            const maxAttempts = 20;
+            const poll = setInterval(async () => {
+              attempts++;
+              try {
+                const status = await documentService.getDocumentStatus(response.id);
+                docStore.syncChatUploads({
+                  id: response.id,
+                  userId: '',
+                  filename: response.filename || file.name,
+                  originalName: file.name,
+                  mimeType: file.type,
+                  size: file.size,
+                  status: status.status,
+                  source: 'chat',
+                  chunkCount: status.chunkCount,
+                  errorMessage: status.errorMessage,
+                  createdAt: new Date().toISOString(),
+                });
+                if (status.status !== 'PROCESSING' || attempts >= maxAttempts) {
+                  clearInterval(poll);
+                }
+              } catch {
+                clearInterval(poll);
+              }
+            }, 3000);
+          };
+          pollStatus();
         } catch (fileError) {
+          clearInterval(progressInterval);
           // Mark this specific attachment as error
           get().updateAttachmentStatus(
             attachment.id,

@@ -20,8 +20,13 @@ export function ChatPage() {
   // Load conversations on mount
   useEffect(() => {
     const load = async () => {
-      await loadConversations();
-      setIsLoading(false);
+      try {
+        await loadConversations();
+      } catch {
+        // Silently handle error — store already tracks error state
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, [loadConversations]);
@@ -51,7 +56,7 @@ export function ChatPage() {
   if (isLoading || isLoadingConversations) {
     return (
       <AppLayout>
-        <div className="h-full flex items-center justify-center bg-background">
+        <div className="flex h-full items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin" />
             <span className="text-sm">Loading...</span>
@@ -63,9 +68,7 @@ export function ChatPage() {
 
   return (
     <AppLayout>
-      <div className="h-full bg-background">
-        <ChatInterface />
-      </div>
+      <ChatInterface />
     </AppLayout>
   );
 }

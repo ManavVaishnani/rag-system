@@ -2,10 +2,15 @@ import { useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useChatStore } from '@/stores/chat-store';
+import { useDocumentStore } from '@/stores/document-store';
 import { socketService } from '@/lib/socket';
 import { MessageList } from './message-list';
 import { MessageInput } from './message-input';
 import { EmptyChatState } from './empty-chat-state';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILES = 10;
+const ALLOWED_EXTENSIONS = '.pdf,.docx,.txt,.md';
 
 export function ChatInterface() {
   const { id: conversationId } = useParams<{ id: string }>();
@@ -26,7 +31,10 @@ export function ChatInterface() {
     addAttachments,
     uploadAttachments,
     removeAttachment,
+    clearAttachments,
   } = useChatStore();
+
+  const { documents } = useDocumentStore();
 
   // Connect socket on mount
   useEffect(() => {
@@ -40,10 +48,11 @@ export function ChatInterface() {
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
+      clearAttachments();
     }
-  }, [conversationId, loadConversation]);
+  }, [conversationId, loadConversation, clearAttachments]);
 
-  // Handle errors
+  // Handle errors from store
   useEffect(() => {
     const error = useChatStore.getState().error;
     if (error) {
@@ -78,53 +87,87 @@ export function ChatInterface() {
 
     // Send via socket
     socketService.sendQuery(conversationId, content);
-  }, [conversationId, pendingAttachments, uploadAttachments, addMessage, startStreaming]);
+
+    // Clear attachments after sending
+    clearAttachments();
+  }, [conversationId, pendingAttachments, uploadAttachments, addMessage, startStreaming, clearAttachments]);
 
   const handleAttachFiles = useCallback(() => {
-    // Create hidden file input
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = '.pdf,.docx,.txt,.md';
+    input.accept = ALLOWED_EXTENSIONS;
     
     input.onchange = (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
-      if (files.length > 0) {
-        // Validate files
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        const validFiles = files.filter(file => {
-          if (file.size > maxSize) {
-            toast.error(`${file.name} exceeds 10MB limit`);
-            return false;
-          }
-          return true;
-        });
+      if (files.length === 0) return;
 
-        if (validFiles.length > 10) {
-          toast.error('Maximum 10 files allowed');
-          return;
+      // Check total count
+      if (pendingAttachments.length + files.length > MAX_FILES) {
+        toast.error(`Maximum ${MAX_FILES} files allowed`);
+        return;
+      }
+
+      const validFiles: File[] = [];
+      const duplicateFiles: File[] = [];
+
+      for (const file of files) {
+        // Validate size
+        if (file.size > MAX_FILE_SIZE) {
+          toast.error(`"${file.name}" exceeds 10 MB limit`);
+          continue;
         }
 
+        // Check for duplicates in pending attachments
+        const isDuplicatePending = pendingAttachments.some(
+          (a) => a.file.name === file.name && a.file.size === file.size
+        );
+        if (isDuplicatePending) {
+          toast.warning(`"${file.name}" is already queued`);
+          continue;
+        }
+
+        // Check for duplicates in existing documents
+        const isDuplicateDoc = documents.some(
+          (d) => (d.originalName === file.name || d.filename === file.name) && (d.size === file.size || d.fileSize === file.size)
+        );
+        if (isDuplicateDoc) {
+          duplicateFiles.push(file);
+          continue;
+        }
+
+        validFiles.push(file);
+      }
+
+      // Handle duplicates with confirmation
+      if (duplicateFiles.length > 0) {
+        const names = duplicateFiles.map((f) => `"${f.name}"`).join(', ');
+        toast.warning(`${names} already exist${duplicateFiles.length > 1 ? '' : 's'} in your documents`, {
+          action: {
+            label: 'Upload anyway',
+            onClick: () => addAttachments(duplicateFiles),
+          },
+          duration: 6000,
+        });
+      }
+
+      if (validFiles.length > 0) {
         addAttachments(validFiles);
       }
     };
     
     input.click();
-  }, [addAttachments]);
+  }, [addAttachments, pendingAttachments, documents]);
 
-  // Always render the container
+  const handleRetryAttachment = useCallback((id: string) => {
+    useChatStore.getState().updateAttachmentStatus(id, 'pending');
+  }, []);
+
   return (
-    <div className="flex flex-col h-full bg-background text-foreground">
-      {/* Debug indicator - remove in production */}
-      <div className="absolute top-0 right-0 p-2 text-xs text-muted-foreground z-50">
-        ChatInterface: {conversationId ? `ID: ${conversationId}` : 'No ID'} | Msgs: {messages.length}
-      </div>
-      
+    <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
       {!conversationId ? (
-        // No conversation selected - show empty state
         <EmptyChatState />
       ) : isLoadingMessages && messages.length === 0 ? (
-        // Loading conversation
         <MessageList
           messages={[]}
           isStreaming={false}
@@ -134,23 +177,22 @@ export function ChatInterface() {
           isLoading={true}
         />
       ) : messages.length === 0 && !isStreaming ? (
-        // New conversation with no messages
         <>
           <div className="flex-1 overflow-hidden">
-            <EmptyChatState />
+            <EmptyChatState onSuggestionClick={handleSendMessage} />
           </div>
           <MessageInput
             onSend={handleSendMessage}
             onAttachFiles={handleAttachFiles}
             attachments={pendingAttachments}
             onRemoveAttachment={removeAttachment}
+            onRetryAttachment={handleRetryAttachment}
             isUploading={isUploadingAttachments}
             isStreaming={isStreaming}
             disabled={!conversationId}
           />
         </>
       ) : (
-        // Active conversation with messages
         <>
           <MessageList
             messages={messages}
@@ -165,6 +207,7 @@ export function ChatInterface() {
             onAttachFiles={handleAttachFiles}
             attachments={pendingAttachments}
             onRemoveAttachment={removeAttachment}
+            onRetryAttachment={handleRetryAttachment}
             isUploading={isUploadingAttachments}
             isStreaming={isStreaming}
             disabled={!conversationId}

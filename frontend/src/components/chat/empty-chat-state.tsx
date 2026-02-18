@@ -3,18 +3,20 @@ import { cn } from '@/lib/utils';
 
 interface EmptyChatStateProps {
   onStartChat?: () => void;
+  onSuggestionClick?: (suggestion: string) => void;
   suggestions?: string[];
 }
 
 const DEFAULT_SUGGESTIONS = [
   "Summarize the key points from my documents",
-  "What information do I have about...",
+  "What information do I have about this topic?",
   "Compare and contrast the documents I've uploaded",
   "Extract important dates and deadlines",
 ];
 
 export function EmptyChatState({ 
   onStartChat, 
+  onSuggestionClick,
   suggestions = DEFAULT_SUGGESTIONS 
 }: EmptyChatStateProps) {
   return (
@@ -42,7 +44,13 @@ export function EmptyChatState({
             <SuggestionCard
               key={index}
               suggestion={suggestion}
-              onClick={() => onStartChat?.()}
+              onClick={() => {
+                if (onSuggestionClick) {
+                  onSuggestionClick(suggestion);
+                } else {
+                  onStartChat?.();
+                }
+              }}
             />
           ))}
         </div>
@@ -50,7 +58,7 @@ export function EmptyChatState({
         {/* Hint */}
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <FileText className="h-4 w-4" />
-          <span>Upload documents to get started</span>
+          <span>Upload documents via the 📎 button or the Documents page</span>
         </div>
       </div>
     </div>
