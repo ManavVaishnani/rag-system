@@ -16,8 +16,8 @@ export const conversationService = {
 
   async getConversations(): Promise<Conversation[]> {
     try {
-      const response = await apiClient.get<ApiResponse<{ conversations: Conversation[] }>>('/conversations');
-      return response.data.data.conversations;
+      const response = await apiClient.get<ApiResponse<Conversation[]>>('/conversations');
+      return response.data.data;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }

@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { ChatInterface } from '@/components/chat';
+import { ChatInterface, EmptyChatState } from '@/components/chat';
 import { useChatStore } from '@/stores/chat-store';
-import { socketService } from '@/lib/socket';
 
 export function ChatPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,19 +30,6 @@ export function ChatPage() {
     load();
   }, [loadConversations]);
 
-  // Connect socket when conversation is selected
-  useEffect(() => {
-    if (id) {
-      socketService.connect();
-    }
-    
-    return () => {
-      if (!id) {
-        socketService.disconnect();
-      }
-    };
-  }, [id]);
-
   // If no ID is provided but we have conversations, redirect to the most recent one
   useEffect(() => {
     if (!isLoading && !id && conversations.length > 0 && !currentConversation) {
@@ -66,6 +52,16 @@ export function ChatPage() {
     );
   }
 
+  // When no specific conversation is selected, show an empty chat state
+  if (!id) {
+    return (
+      <AppLayout>
+        <EmptyChatState />
+      </AppLayout>
+    );
+  }
+
+  // Conversation selected – render full chat interface
   return (
     <AppLayout>
       <ChatInterface />

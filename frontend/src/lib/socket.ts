@@ -9,30 +9,52 @@ class SocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
 
   connect() {
-    const { accessToken } = useAuthStore.getState();
-
-    if (!accessToken) {
-      console.error('No access token available for socket connection');
-      return;
+    // Cancel any pending connection attempt
+    if (this.connectTimer) {
+      clearTimeout(this.connectTimer);
     }
 
-    this.socket = io(SOCKET_URL, {
-      auth: {
-        token: accessToken,
-      },
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: this.maxReconnectAttempts,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    });
+    // Defer the actual connection so a rapid disconnect() (React StrictMode
+    // double-invoke in dev) can cancel it before the socket is ever created.
+    this.connectTimer = setTimeout(() => {
+      this.connectTimer = null;
 
-    this.setupEventListeners();
+      if (this.socket?.connected || this.socket?.active) {
+        return;
+      }
+
+      const { accessToken } = useAuthStore.getState();
+
+      if (!accessToken) {
+        console.error('No access token available for socket connection');
+        return;
+      }
+
+      this.socket = io(SOCKET_URL, {
+        auth: {
+          token: accessToken,
+        },
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+      });
+
+      this.setupEventListeners();
+    }, 50);
   }
 
   disconnect() {
+    // Cancel a pending deferred connect so the socket is never opened
+    if (this.connectTimer) {
+      clearTimeout(this.connectTimer);
+      this.connectTimer = null;
+    }
+
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;

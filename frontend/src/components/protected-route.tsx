@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProtectedRouteProps {
@@ -25,13 +25,14 @@ function RouteLoadingScreen() {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, isHydrated, checkAuth } = useAuthStore();
+  const checkAuthRef = useRef(checkAuth);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    checkAuthRef.current();
+  }, []);
 
-  if (isLoading) {
+  if (!isHydrated || isLoading) {
     return <RouteLoadingScreen />;
   }
 
@@ -47,13 +48,14 @@ interface PublicRouteProps {
 }
 
 export function PublicRoute({ children }: PublicRouteProps) {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, isHydrated, checkAuth } = useAuthStore();
+  const checkAuthRef = useRef(checkAuth);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    checkAuthRef.current();
+  }, []);
 
-  if (isLoading) {
+  if (!isHydrated || isLoading) {
     return <RouteLoadingScreen />;
   }
 
