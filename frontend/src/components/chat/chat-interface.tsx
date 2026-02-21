@@ -24,9 +24,11 @@ export function ChatInterface() {
     streamingSources,
     pendingAttachments,
     isUploadingAttachments,
+    error,
     loadConversation,
     addMessage,
     startStreaming,
+    stopStreaming,
     setError,
     addAttachments,
     uploadAttachments,
@@ -52,14 +54,13 @@ export function ChatInterface() {
     }
   }, [conversationId, loadConversation, clearAttachments]);
 
-  // Handle errors from store
+  // Show toast whenever the store surfaces an error (e.g. query:error from socket)
   useEffect(() => {
-    const error = useChatStore.getState().error;
     if (error) {
       toast.error(error);
       setError(null);
     }
-  }, [setError]);
+  }, [error, setError]);
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!conversationId) {
@@ -85,12 +86,17 @@ export function ChatInterface() {
     // Start streaming
     startStreaming();
 
-    // Send via socket
-    socketService.sendQuery(conversationId, content);
+    // Send via socket — false means the socket isn't connected yet
+    const sent = socketService.sendQuery(conversationId, content);
+    if (!sent) {
+      stopStreaming();
+      toast.error('Not connected to server. Please wait a moment and try again.');
+      return;
+    }
 
     // Clear attachments after sending
     clearAttachments();
-  }, [conversationId, pendingAttachments, uploadAttachments, addMessage, startStreaming, clearAttachments]);
+  }, [conversationId, pendingAttachments, uploadAttachments, addMessage, startStreaming, stopStreaming, clearAttachments]);
 
   const handleAttachFiles = useCallback(() => {
     const input = document.createElement('input');

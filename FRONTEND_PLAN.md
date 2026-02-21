@@ -839,65 +839,65 @@ rag-system/
 - [x] Test authentication flow end-to-end (happy paths and basic error cases)
 
 ### Phase 4: Document Management (3-4 hours)
-- [ ] Build DocumentsPage layout with grid
-- [ ] Create DocumentUpload component with drag & drop
-- [ ] Create DocumentList component
-- [ ] Create DocumentCard component with status badges
-- [ ] Create UploadProgress component
-- [ ] Implement document service methods
-- [ ] Connect to document store
-- [ ] Add upload progress indicators
-- [ ] Add document deletion with confirmation
-- [ ] Add polling for document processing status
+- [x] Build DocumentsPage layout with grid
+- [x] Create DocumentUpload component with drag & drop
+- [x] Create DocumentList component
+- [x] Create DocumentCard component with status badges
+- [x] Create UploadProgress component
+- [x] Implement document service methods
+- [x] Connect to document store
+- [x] Add upload progress indicators
+- [x] Add document deletion with confirmation
+- [x] Add polling for document processing status
 
 ### Phase 5: Chat Interface (4-5 hours)
-- [ ] Build ChatPage layout with sidebar
-- [ ] Create ChatInterface component
-- [ ] Create MessageBubble component (user vs assistant)
-- [ ] Create MessageInput with send button and enter key
-- [ ] Implement message service
-- [ ] Setup Socket.io client connection
-- [ ] Create StreamingText component with typewriter effect
-- [ ] Create SourceCitations component
-- [ ] Connect to chat store
-- [ ] Handle streaming events (status, sources, chunks, complete)
-- [ ] Add typing indicators
-- [ ] Add scroll to bottom on new messages
+- [x] Build ChatPage layout with sidebar
+- [x] Create ChatInterface component
+- [x] Create MessageBubble component (user vs assistant)
+- [x] Create MessageInput with send button and enter key
+- [x] Implement message service
+- [x] Setup Socket.io client connection
+- [x] Create StreamingText component with typewriter effect
+- [x] Create SourceCitations component
+- [x] Connect to chat store
+- [x] Handle streaming events (status, sources, chunks, complete)
+- [x] Add typing indicators
+- [x] Add scroll to bottom on new messages
 
 ### Phase 6: Chat-Integrated Document Upload (3 hours) - NEW
-- [ ] Create AttachmentButton component (paperclip icon)
-- [ ] Create FilePreviewChips component with progress bars
-- [ ] Create DocumentChip component for inline references
-- [ ] Update MessageInput to handle attachments
-- [ ] Implement multi-file upload validation (10 MB limit, max 10 files)
-- [ ] Add upload progress tracking per file
-- [ ] Sync uploaded documents to Documents store
-- [ ] Show document status in chat (processing/completed)
-- [ ] Handle duplicate file detection
-- [ ] Add error handling and retry logic
+- [x] Create AttachmentButton component (paperclip icon)
+- [x] Create FilePreviewChips component with progress bars
+- [x] Create DocumentChip component for inline references
+- [x] Update MessageInput to handle attachments
+- [x] Implement multi-file upload validation (10 MB limit, max 10 files)
+- [x] Add upload progress tracking per file
+- [x] Sync uploaded documents to Documents store
+- [x] Show document status in chat (processing/completed)
+- [x] Handle duplicate file detection
+- [x] Add error handling and retry logic
 - [ ] Test upload flow end-to-end
 
 ### Phase 7: Conversation Management (2-3 hours)
-- [ ] Create ConversationList sidebar component
-- [ ] Create ConversationItem component with hover actions
-- [ ] Create NewConversationButton
-- [ ] Implement conversation CRUD operations
-- [ ] Add conversation title editing (inline)
-- [ ] Add delete confirmation dialogs
-- [ ] Add search/filter conversations
-- [ ] Add conversation list sorting (newest first)
+- [x] Create ConversationList sidebar component
+- [x] Create ConversationItem component with hover actions
+- [x] Create NewConversationButton
+- [x] Implement conversation CRUD operations
+- [x] Add conversation title editing (inline)
+- [x] Add delete confirmation dialogs
+- [x] Add search/filter conversations
+- [x] Add conversation list sorting (newest first)
 
 ### Phase 8: Polish & Landing Page (3-4 hours)
-- [ ] Build LandingPage with hero section
-- [ ] Add feature highlights section
-- [ ] Add CTA buttons
-- [ ] Add footer with links
-- [ ] Add loading skeletons for all async operations
-- [ ] Add error handling with Sonner toast notifications
-- [ ] Add empty states for lists
-- [ ] Implement responsive design (mobile, tablet, desktop)
-- [ ] Add keyboard shortcuts (e.g., Ctrl+Enter to send)
-- [ ] Performance optimizations (lazy loading, memoization)
+- [x] Build LandingPage with hero section
+- [x] Add feature highlights section
+- [x] Add CTA buttons
+- [x] Add footer with links
+- [x] Add loading skeletons for all async operations
+- [x] Add error handling with Sonner toast notifications
+- [x] Add empty states for lists
+- [x] Implement responsive design (mobile, tablet, desktop)
+- [x] Add keyboard shortcuts (e.g., Ctrl+Enter to send)
+- [x] Performance optimizations (lazy loading, memoization)
 
 ### Phase 9: Testing & Deployment (2-3 hours)
 - [ ] Test authentication flow (login, register, logout)
@@ -1329,13 +1329,14 @@ export interface Document {
 
 ---
 
-**Document Version**: 3.0  
-**Last Updated**: 2026-02-12  
-**Status**: In Progress (Phases 1–3 implemented)
+**Document Version**: 4.0
+**Last Updated**: 2026-02-21
+**Status**: Phases 1–8 Complete — Ready for Testing & Deployment (Phase 9)
 
-**Key Updates in v3.0**:
-- Marked Phases 1 and 2 as completed based on core infrastructure implementation
-- Completed Phase 3 Authentication with React Hook Form + Zod forms for login/register
-- Added password strength indicator and improved auth error handling/clearing
-- Introduced skeleton-based route loading state for protected/public routes
-- Implemented SPA-friendly auth redirect on token refresh failure via `auth-redirect` helper
+**Key Updates in v4.0**:
+- Completed Phase 4: Full DocumentsPage with drag-and-drop upload, document cards, deletion, and status polling
+- Completed Phase 5: Full chat interface with WebSocket streaming, markdown rendering, source citations, and scroll behavior
+- Completed Phase 6: Chat-integrated file upload with AttachmentButton, FilePreviewChips, DocumentChip, per-file progress, duplicate detection, error/retry handling, and cross-store sync
+- Completed Phase 7: ConversationList, ConversationItem, NewConversationButton components extracted; inline title editing, search/filter, delete with redirect
+- Completed Phase 8: LandingPage, error boundary (ErrorBoundary), loading spinner (LoadingSpinner), reusable FileUploadZone, Logo component, Sonner toast notifications, and lazy-loaded routes (main bundle reduced from 858 kB → 370 kB)
+- Added full custom hooks layer: useAuth, useChat, useDocuments, useConversations

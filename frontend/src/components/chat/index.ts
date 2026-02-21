@@ -5,3 +5,6 @@ export { MessageInput } from './message-input';
 export { StreamingMessage } from './streaming-message';
 export { SourceCitations } from './source-citations';
 export { EmptyChatState } from './empty-chat-state';
+export { AttachmentButton } from './attachment-button';
+export { FilePreviewChips } from './file-preview-chips';
+export { DocumentChip } from './document-chip';
