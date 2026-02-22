@@ -30,6 +30,7 @@ interface ChatState {
   // Actions
   loadConversations: () => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
+  refreshConversationMessages: () => Promise<void>;
   createConversation: () => Promise<Conversation | null>;
   deleteConversation: (id: string) => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
@@ -102,6 +103,21 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to load conversation',
         isLoadingMessages: false,
       });
+    }
+  },
+
+  // Refresh messages for current conversation
+  refreshConversationMessages: async () => {
+    const { currentConversation } = get();
+    if (!currentConversation) return;
+
+    try {
+      const data = await conversationService.getConversation(currentConversation.id);
+      set({
+        messages: data.messages,
+      });
+    } catch (error) {
+      console.error('Failed to refresh conversation messages:', error);
     }
   },
 

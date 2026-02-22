@@ -122,19 +122,28 @@ export function setupWebSocket(io: SocketIOServer): void {
               );
 
               // Save to conversation if provided
+              let assistantMessageId = `msg-${Date.now()}`;
               if (conversationId) {
                 try {
-                  await prisma.message.createMany({
-                    data: [
-                      { conversationId, role: "USER", content: query },
-                      {
-                        conversationId,
-                        role: "ASSISTANT",
-                        content: fullResponse,
-                        sources: JSON.parse(JSON.stringify(sources)),
-                      },
-                    ],
+                  // Create user message first
+                  await prisma.message.create({
+                    data: {
+                      conversationId,
+                      role: "USER",
+                      content: query,
+                    },
                   });
+
+                  // Create assistant message
+                  const assistantMessage = await prisma.message.create({
+                    data: {
+                      conversationId,
+                      role: "ASSISTANT",
+                      content: fullResponse,
+                      sources: JSON.parse(JSON.stringify(sources)),
+                    },
+                  });
+                  assistantMessageId = assistantMessage.id;
 
                   await prisma.conversation.update({
                     where: { id: conversationId },
@@ -145,7 +154,10 @@ export function setupWebSocket(io: SocketIOServer): void {
                 }
               }
 
-              socket.emit("query:complete", { done: true });
+              socket.emit("query:complete", { 
+                done: true,
+                messageId: assistantMessageId,
+              });
             },
             onError: (error: Error) => {
               logger.error("LLM streaming error:", error);

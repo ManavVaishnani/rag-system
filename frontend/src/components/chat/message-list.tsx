@@ -21,15 +21,21 @@ export function MessageList({
   streamingSources,
   isLoading = false,
 }: MessageListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages or streaming content
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, streamingContent]);
+    // Use requestAnimationFrame for more responsive scrolling during streaming
+    const scrollFrame = requestAnimationFrame(() => {
+      if (bottomRef.current) {
+        // For streaming, scroll immediately; for new messages, scroll smoothly
+        const behavior = isStreaming ? 'auto' : 'smooth';
+        bottomRef.current.scrollIntoView({ behavior });
+      }
+    });
+    
+    return () => cancelAnimationFrame(scrollFrame);
+  }, [messages, streamingContent, isStreaming]);
 
   if (isLoading) {
     return (
@@ -43,24 +49,26 @@ export function MessageList({
   }
 
   return (
-    <ScrollArea className="flex-1 px-4 py-6 bg-background" ref={scrollRef}>
-      <div className="max-w-3xl mx-auto space-y-2">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        
-        {/* Streaming Message */}
-        {isStreaming && (
-          <StreamingMessage
-            content={streamingContent}
-            status={streamingStatus}
-            sources={streamingSources}
-          />
-        )}
-        
-        {/* Bottom anchor for auto-scroll */}
-        <div ref={bottomRef} />
-      </div>
-    </ScrollArea>
+    <div className="flex-1 w-full overflow-hidden">
+      <ScrollArea className="h-full w-full">
+        <div className="px-4 py-6 max-w-3xl mx-auto space-y-2">
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          
+          {/* Streaming Message */}
+          {isStreaming && (
+            <StreamingMessage
+              content={streamingContent}
+              status={streamingStatus}
+              sources={streamingSources}
+            />
+          )}
+          
+          {/* Bottom anchor for auto-scroll */}
+          <div ref={bottomRef} className="h-0" />
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

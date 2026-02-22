@@ -34,6 +34,8 @@ class SocketService {
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
   // Holds a query that arrived before the socket finished connecting
   private pendingQuery: { conversationId: string; content: string } | null = null;
+  // Track the current conversation being queried
+  private currentQueryConversationId: string | null = null;
 
   connect() {
     if (this.connectTimer) {
@@ -147,7 +149,7 @@ class SocketService {
       content?: string;
       sources?: BackendSource[];
     }) => {
-      const { stopStreaming, addMessage, currentConversation, streamingContent } =
+      const { stopStreaming, addMessage, currentConversation, streamingContent, refreshConversationMessages } =
         useChatStore.getState();
 
       // Use accumulated streaming content when backend only sends { done: true }
@@ -159,33 +161,49 @@ class SocketService {
 
       stopStreaming();
 
-      if (currentConversation) {
+      // Try to add message to store
+      const conversationId = currentConversation?.id || this.currentQueryConversationId;
+      
+      if (conversationId) {
         addMessage({
           id: data.messageId ?? `msg-${Date.now()}`,
-          conversationId: currentConversation.id,
+          conversationId,
           role: 'ASSISTANT',
           content: finalContent,
           sources: data.sources?.map(mapSource),
           createdAt: new Date().toISOString(),
         });
+
+        // Refresh conversation messages to sync with database
+        // This ensures the message is displayed even if there were timing issues
+        setTimeout(() => {
+          refreshConversationMessages();
+        }, 500);
       }
     });
 
     // Cached response — backend sends { response, sources } without streaming chunks
     this.socket.on('query:cached', (data: { response: string; sources?: BackendSource[] }) => {
-      const { stopStreaming, addMessage, currentConversation } = useChatStore.getState();
+      const { stopStreaming, addMessage, currentConversation, refreshConversationMessages } = useChatStore.getState();
 
       stopStreaming();
 
-      if (currentConversation && data.response) {
+      const conversationId = currentConversation?.id || this.currentQueryConversationId;
+      
+      if (conversationId && data.response) {
         addMessage({
           id: `cached-${Date.now()}`,
-          conversationId: currentConversation.id,
+          conversationId,
           role: 'ASSISTANT',
           content: data.response,
           sources: data.sources?.map(mapSource),
           createdAt: new Date().toISOString(),
         });
+
+        // Refresh conversation messages to sync with database
+        setTimeout(() => {
+          refreshConversationMessages();
+        }, 500);
       }
     });
 
@@ -204,6 +222,9 @@ class SocketService {
    * - Not initialised     → returns false (caller should show an error).
    */
   sendQuery(conversationId: string, content: string): boolean {
+    // Track the conversation ID for this query
+    this.currentQueryConversationId = conversationId;
+
     if (this.socket?.connected) {
       // Backend expects field named "query", NOT "content"
       this.socket.emit('query:stream', { conversationId, query: content });
