@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -8,7 +8,6 @@ import { useChatStore } from '@/stores/chat-store';
 export function ChatPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
   const { 
     conversations, 
     isLoadingConversations,
@@ -16,30 +15,23 @@ export function ChatPage() {
     loadConversations,
   } = useChatStore();
 
-  // Load conversations on mount
+  // Load conversations only on true initial load (nothing cached yet)
   useEffect(() => {
-    const load = async () => {
-      try {
-        await loadConversations();
-      } catch {
-        // Silently handle error — store already tracks error state
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, [loadConversations]);
+    if (conversations.length === 0 && !isLoadingConversations) {
+      loadConversations();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // If no ID is provided but we have conversations, redirect to the most recent one
   useEffect(() => {
-    if (!isLoading && !id && conversations.length > 0 && !currentConversation) {
+    if (!isLoadingConversations && !id && conversations.length > 0 && !currentConversation) {
       const mostRecent = conversations[0];
       navigate(`/chat/${mostRecent.id}`, { replace: true });
     }
-  }, [id, conversations, currentConversation, navigate, isLoading]);
+  }, [id, conversations, currentConversation, navigate, isLoadingConversations]);
 
-  // Show loading state while checking for conversations
-  if (isLoading || isLoadingConversations) {
+  // Show loading state only on initial load (no conversations cached yet)
+  if (isLoadingConversations && conversations.length === 0) {
     return (
       <AppLayout>
         <div className="flex h-full items-center justify-center bg-background">

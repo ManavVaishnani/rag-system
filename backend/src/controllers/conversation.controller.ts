@@ -21,7 +21,9 @@ export class ConversationController {
 
       res.status(201).json({
         success: true,
-        data: conversation,
+        data: {
+          conversation,
+        },
       });
     } catch (error) {
       logger.error("Create conversation failed:", error);
@@ -74,11 +76,6 @@ export class ConversationController {
 
       const conversation = await prisma.conversation.findFirst({
         where: { id, userId },
-        include: {
-          messages: {
-            orderBy: { createdAt: "asc" },
-          },
-        },
       });
 
       if (!conversation) {
@@ -86,9 +83,17 @@ export class ConversationController {
         return;
       }
 
+      const messages = await prisma.message.findMany({
+        where: { conversationId: id },
+        orderBy: { createdAt: "asc" },
+      });
+
       res.json({
         success: true,
-        data: conversation,
+        data: {
+          conversation,
+          messages,
+        },
       });
     } catch (error) {
       logger.error("Get conversation failed:", error);
@@ -118,7 +123,9 @@ export class ConversationController {
 
       res.json({
         success: true,
-        data: updated,
+        data: {
+          conversation: updated,
+        },
       });
     } catch (error) {
       logger.error("Update conversation failed:", error);

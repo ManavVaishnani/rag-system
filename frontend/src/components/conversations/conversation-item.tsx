@@ -20,7 +20,7 @@ export function ConversationItem({
   onRename,
 }: ConversationItemProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(conversation.title);
+  const [editTitle, setEditTitle] = useState(conversation.title || 'Untitled Conversation');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export function ConversationItem({
   const handleStartEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setEditTitle(conversation.title);
+    setEditTitle(conversation.title || 'Untitled Conversation');
     setIsEditing(true);
   };
 
@@ -41,7 +41,7 @@ export function ConversationItem({
     e?.stopPropagation();
     e?.preventDefault();
     const trimmed = editTitle.trim();
-    if (trimmed && trimmed !== conversation.title) {
+    if (trimmed && trimmed !== (conversation.title || 'Untitled Conversation')) {
       onRename(trimmed);
     }
     setIsEditing(false);
@@ -50,7 +50,7 @@ export function ConversationItem({
   const handleCancelEdit = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     e?.preventDefault();
-    setEditTitle(conversation.title);
+    setEditTitle(conversation.title || 'Untitled Conversation');
     setIsEditing(false);
   };
 
@@ -103,11 +103,11 @@ export function ConversationItem({
       <div className="flex items-center space-x-2 overflow-hidden min-w-0">
         <MessageSquare
           className={cn(
-            'h-3.5 w-3.5 flex-shrink-0',
+            'h-3.5 w-3.5 shrink-0',
             isActive ? 'text-accent' : 'text-muted-foreground/60'
           )}
         />
-        <span className="truncate text-xs">{conversation.title}</span>
+        <span className="truncate text-xs">{conversation.title || 'Untitled Conversation'}</span>
       </div>
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <Button

@@ -21,10 +21,10 @@ function normalizeMessageSources(messages: Message[]): Message[] {
 export const conversationService = {
   async createConversation(): Promise<Conversation> {
     try {
-      const response = await apiClient.post<ApiResponse<{ conversation: Conversation }>>('/conversations', {
+      const response = await apiClient.post<ApiResponse<Conversation>>('/conversations', {
         title: 'New Conversation',
       });
-      return response.data.data.conversation;
+      return response.data.data;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }
@@ -51,10 +51,10 @@ export const conversationService = {
 
   async updateConversation(id: string, title: string): Promise<Conversation> {
     try {
-      const response = await apiClient.patch<ApiResponse<{ conversation: Conversation }>>(`/conversations/${id}`, {
+      const response = await apiClient.patch<ApiResponse<Conversation>>(`/conversations/${id}`, {
         title,
       });
-      return response.data.data.conversation;
+      return response.data.data;
     } catch (error) {
       throw new Error(handleApiError(error as AxiosError));
     }

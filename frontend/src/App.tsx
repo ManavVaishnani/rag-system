@@ -82,15 +82,7 @@ function AppRoutes() {
 
       {/* Protected routes */}
       <Route
-        path="/chat"
-        element={
-          <ProtectedRoute>
-            <ChatPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/chat/:id"
+        path="/chat/:id?"
         element={
           <ProtectedRoute>
             <ChatPage />

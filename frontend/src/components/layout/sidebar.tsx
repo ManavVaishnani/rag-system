@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chat-store';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,7 +20,15 @@ export function Sidebar() {
     deleteConversation,
     updateConversationTitle,
     isLoadingConversations,
+    loadConversations,
   } = useChatStore();
+
+  // Load conversations on sidebar mount (skip if already loaded)
+  useEffect(() => {
+    if (conversations.length === 0 && !isLoadingConversations) {
+      loadConversations();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNewChat = async () => {
     const conversation = await createConversation();
@@ -40,7 +48,7 @@ export function Sidebar() {
   };
 
   const filteredConversations = conversations.filter((c) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    c && (c.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeId = location.pathname.startsWith('/chat/')

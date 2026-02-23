@@ -76,10 +76,16 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   // Load all conversations
   loadConversations: async () => {
-    set({ isLoadingConversations: true });
+    // Only show loading state on initial load (no conversations yet)
+    const isInitialLoad = get().conversations.length === 0;
+    if (isInitialLoad) {
+      set({ isLoadingConversations: true });
+    }
     try {
       const conversations = await conversationService.getConversations();
-      set({ conversations, isLoadingConversations: false });
+      // Filter out any null/undefined conversations
+      const validConversations = (conversations || []).filter((c) => c && c.id);
+      set({ conversations: validConversations, isLoadingConversations: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to load conversations',
@@ -125,11 +131,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   createConversation: async () => {
     try {
       const conversation = await conversationService.createConversation();
-      set((state) => ({
-        conversations: [conversation, ...state.conversations],
-        currentConversation: conversation,
-        messages: [],
-      }));
+      // Only add valid conversations to the store
+      if (conversation && conversation.id) {
+        set((state) => ({
+          conversations: [conversation, ...state.conversations],
+          currentConversation: conversation,
+          messages: [],
+        }));
+      }
       return conversation;
     } catch (error) {
       set({
@@ -157,14 +166,26 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   // Update conversation title
   updateConversationTitle: async (id, title) => {
+    // Optimistic update — apply immediately so the sidebar reflects the change
+    const previousConversations = get().conversations;
+    const previousCurrent = get().currentConversation;
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === id ? { ...c, title } : c
+      ),
+      currentConversation:
+        state.currentConversation?.id === id
+          ? { ...state.currentConversation, title }
+          : state.currentConversation,
+    }));
+
     try {
-      const updated = await conversationService.updateConversation(id, title);
-      set((state) => ({
-        conversations: state.conversations.map((c) => (c.id === id ? updated : c)),
-        currentConversation: state.currentConversation?.id === id ? updated : state.currentConversation,
-      }));
+      await conversationService.updateConversation(id, title);
     } catch (error) {
+      // Revert optimistic update on failure
       set({
+        conversations: previousConversations,
+        currentConversation: previousCurrent,
         error: error instanceof Error ? error.message : 'Failed to update conversation',
       });
     }
