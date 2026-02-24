@@ -328,9 +328,13 @@ export class DocumentController {
         return;
       }
 
-      // Delete vectors from Qdrant
-      const vectorService = getVectorService();
-      await vectorService.deleteByDocumentId(id);
+      // Delete vectors from Qdrant (non-blocking — proceed even if Qdrant fails)
+      try {
+        const vectorService = getVectorService();
+        await vectorService.deleteByDocumentId(id);
+      } catch (vectorError) {
+        logger.warn(`Failed to delete vectors from Qdrant for document ${id}, proceeding with DB deletion:`, vectorError);
+      }
 
       // Delete document (cascades to chunks)
       await prisma.document.delete({ where: { id } });

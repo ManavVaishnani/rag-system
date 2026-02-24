@@ -68,7 +68,7 @@ export function DocumentViewer({ documentId, isOpen, onClose }: DocumentViewerPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
+      <DialogContent showCloseButton={false} className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function DocumentViewer({ documentId, isOpen, onClose }: DocumentViewerPr
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
             <div className="p-6 space-y-4">
               <Skeleton className="h-4 w-full" />
@@ -99,7 +99,7 @@ export function DocumentViewer({ documentId, isOpen, onClose }: DocumentViewerPr
               {error}
             </div>
           ) : content ? (
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col min-h-0">
               {/* Document Info */}
               <div className="px-6 py-3 border-b bg-muted/50">
                 <div className="flex items-center gap-4 text-sm">
@@ -116,7 +116,7 @@ export function DocumentViewer({ documentId, isOpen, onClose }: DocumentViewerPr
               </div>
 
               {/* Chunk Content */}
-              <ScrollArea className="flex-1 p-6">
+              <ScrollArea className="flex-1 overflow-y-auto p-6">
                 {content.chunks.length > 0 ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
