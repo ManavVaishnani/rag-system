@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { PendingAttachment } from '@/types';
+import type { DailyUsage } from '@/services/chat.service';
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -15,6 +16,7 @@ interface MessageInputProps {
   isStreaming?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  dailyUsage?: DailyUsage | null;
 }
 
 export function MessageInput({
@@ -27,6 +29,7 @@ export function MessageInput({
   isStreaming = false,
   disabled = false,
   placeholder = "Ask anything about your documents...",
+  dailyUsage,
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -60,7 +63,8 @@ export function MessageInput({
 
   const hasAttachments = attachments.length > 0;
   const hasErrors = attachments.some((a) => a.status === 'error');
-  const isSendDisabled = disabled || isStreaming || isUploading || (!content.trim() && !hasAttachments) || hasErrors;
+  const isLimitReached = dailyUsage ? dailyUsage.remaining <= 0 : false;
+  const isSendDisabled = disabled || isStreaming || isUploading || (!content.trim() && !hasAttachments) || hasErrors || isLimitReached;
 
   return (
     <div className="border-t border-border bg-card/80 backdrop-blur-sm p-4">
@@ -139,7 +143,9 @@ export function MessageInput({
       {/* Helper Text */}
       <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground/70">
         <span>
-          {isStreaming
+          {isLimitReached
+            ? '🚫 Daily message limit reached. Resets at midnight UTC.'
+            : isStreaming
             ? '✨ AI is thinking...'
             : hasErrors
             ? '⚠️ Fix upload errors before sending'
@@ -147,11 +153,25 @@ export function MessageInput({
             ? '⏳ Uploading files...'
             : 'Enter to send · Shift+Enter for new line · 📎 to attach files'}
         </span>
-        {attachments.length > 0 && (
-          <span className="text-xs">
-            {attachments.filter((a) => a.status === 'completed').length}/{attachments.length} uploaded
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {attachments.length > 0 && (
+            <span className="text-xs">
+              {attachments.filter((a) => a.status === 'completed').length}/{attachments.length} uploaded
+            </span>
+          )}
+          {dailyUsage && (
+            <span className={cn(
+              "text-xs font-medium",
+              dailyUsage.remaining <= 0
+                ? "text-red-400"
+                : dailyUsage.remaining <= 5
+                ? "text-yellow-400"
+                : "text-muted-foreground/70"
+            )}>
+              {dailyUsage.remaining}/{dailyUsage.limit} messages left today
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

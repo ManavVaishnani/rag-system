@@ -6,14 +6,37 @@ import { getEmbeddingService } from "../services/embedding.service";
 import { getVectorService } from "../services/vector.service";
 import { getLLMService } from "../services/llm.service";
 import { getCacheService } from "../services/cache.service";
+import { dailyLimitService } from "../services/daily-limit.service";
 import { SourceCitation } from "../types";
 import { QueryInput } from "../utils/validators";
 
 export class QueryController {
+  async getUsage(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const usage = await dailyLimitService.getUsage(userId);
+      res.json({ success: true, data: usage });
+    } catch (error: any) {
+      logger.error("Failed to get usage:", error);
+      res.status(500).json({ error: "Failed to get usage" });
+    }
+  }
+
   async query(req: Request, res: Response): Promise<void> {
     try {
       const { query, conversationId } = req.body as QueryInput;
       const userId = req.user!.userId;
+
+      // Check daily message limit
+      const { allowed, usage } = await dailyLimitService.canSendMessage(userId);
+      if (!allowed) {
+        res.status(429).json({
+          error: `Daily message limit reached (${usage.limit} messages per day).`,
+          code: "DAILY_LIMIT_REACHED",
+          usage,
+        });
+        return;
+      }
 
       const embeddingService = getEmbeddingService();
       const vectorService = getVectorService();
@@ -131,6 +154,9 @@ export class QueryController {
         sources,
       );
 
+      // Increment daily message counter
+      const updatedUsage = await dailyLimitService.incrementUsage(userId);
+
       res.json({
         success: true,
         data: {
@@ -138,6 +164,7 @@ export class QueryController {
           sources,
           conversationId: activeConversationId,
           cached: false,
+          usage: updatedUsage,
         },
       });
     } catch (error: any) {

@@ -10,6 +10,9 @@ const router = Router();
 // All routes require authentication
 router.use(authMiddleware);
 
+// Get daily usage info
+router.get("/usage", (req, res) => queryController.getUsage(req, res));
+
 // Query endpoint
 router.post("/", apiRateLimiter, validateBody(querySchema), (req, res) =>
   queryController.query(req, res),

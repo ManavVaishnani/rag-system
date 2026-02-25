@@ -140,7 +140,7 @@ class SocketService {
 
     // Query complete
     // Backend sends either:
-    //   { done: true }                           — streaming case (chunks already received)
+    //   { done: true, usage: DailyUsage }                           — streaming case (chunks already received)
     //   { response: string, sources: Source[] }  — no-documents / zero-results case
     this.socket.on('query:complete', (data: {
       done?: boolean;
@@ -148,9 +148,15 @@ class SocketService {
       messageId?: string;
       content?: string;
       sources?: BackendSource[];
+      usage?: { used: number; limit: number; remaining: number; resetsAt: string };
     }) => {
-      const { stopStreaming, addMessage, currentConversation, streamingContent, refreshConversationMessages } =
+      const { stopStreaming, addMessage, currentConversation, streamingContent, refreshConversationMessages, updateDailyUsage } =
         useChatStore.getState();
+
+      // Update daily usage if provided
+      if (data.usage) {
+        updateDailyUsage(data.usage);
+      }
 
       // Use accumulated streaming content when backend only sends { done: true }
       const finalContent =
@@ -208,9 +214,12 @@ class SocketService {
     });
 
     // Error handling
-    this.socket.on('query:error', (data: { error: string }) => {
-      const { stopStreaming, setError } = useChatStore.getState();
+    this.socket.on('query:error', (data: { error: string; code?: string; usage?: { used: number; limit: number; remaining: number; resetsAt: string } }) => {
+      const { stopStreaming, setError, updateDailyUsage } = useChatStore.getState();
       stopStreaming();
+      if (data.usage) {
+        updateDailyUsage(data.usage);
+      }
       setError(data.error);
     });
   }

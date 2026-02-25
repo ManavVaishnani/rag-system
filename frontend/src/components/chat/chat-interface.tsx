@@ -24,6 +24,7 @@ export function ChatInterface() {
     streamingSources,
     pendingAttachments,
     isUploadingAttachments,
+    dailyUsage,
     error,
     loadConversation,
     addMessage,
@@ -34,17 +35,19 @@ export function ChatInterface() {
     uploadAttachments,
     removeAttachment,
     clearAttachments,
+    loadDailyUsage,
   } = useChatStore();
 
   const { documents } = useDocumentStore();
 
-  // Connect socket on mount
+  // Connect socket on mount and load daily usage
   useEffect(() => {
     socketService.connect();
+    loadDailyUsage();
     return () => {
       socketService.disconnect();
     };
-  }, []);
+  }, [loadDailyUsage]);
 
   // Load conversation when ID changes
   useEffect(() => {
@@ -65,6 +68,12 @@ export function ChatInterface() {
   const handleSendMessage = useCallback(async (content: string) => {
     if (!conversationId) {
       toast.error('No conversation selected');
+      return;
+    }
+
+    // Check daily message limit
+    if (dailyUsage && dailyUsage.remaining <= 0) {
+      toast.error(`Daily message limit reached (${dailyUsage.limit}/day). Resets at midnight UTC.`);
       return;
     }
 
@@ -196,6 +205,7 @@ export function ChatInterface() {
             isUploading={isUploadingAttachments}
             isStreaming={isStreaming}
             disabled={!conversationId}
+            dailyUsage={dailyUsage}
           />
         </>
       ) : (
@@ -217,6 +227,7 @@ export function ChatInterface() {
             isUploading={isUploadingAttachments}
             isStreaming={isStreaming}
             disabled={!conversationId}
+            dailyUsage={dailyUsage}
           />
         </>
       )}

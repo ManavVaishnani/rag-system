@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Conversation, Message, PendingAttachment, Source } from '@/types';
 import { conversationService } from '@/services/conversation.service';
+import { chatService, type DailyUsage } from '@/services/chat.service';
 import { documentService } from '@/services/document.service';
 import { useDocumentStore } from '@/stores/document-store';
 
@@ -26,6 +27,10 @@ interface ChatState {
 
   // Error
   error: string | null;
+
+  // Daily usage
+  dailyUsage: DailyUsage | null;
+  isLoadingUsage: boolean;
 
   // Actions
   loadConversations: () => Promise<void>;
@@ -55,6 +60,10 @@ interface ChatState {
   removeAttachment: (id: string) => void;
   clearAttachments: () => void;
 
+  // Daily usage actions
+  loadDailyUsage: () => Promise<void>;
+  updateDailyUsage: (usage: DailyUsage) => void;
+
   // Error
   setError: (error: string | null) => void;
 }
@@ -73,6 +82,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   pendingAttachments: [],
   isUploadingAttachments: false,
   error: null,
+  dailyUsage: null,
+  isLoadingUsage: false,
 
   // Load all conversations
   loadConversations: async () => {
@@ -389,6 +400,22 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   clearAttachments: () => {
     set({ pendingAttachments: [] });
+  },
+
+  // Daily usage
+  loadDailyUsage: async () => {
+    set({ isLoadingUsage: true });
+    try {
+      const usage = await chatService.getDailyUsage();
+      set({ dailyUsage: usage, isLoadingUsage: false });
+    } catch (error) {
+      console.error('Failed to load daily usage:', error);
+      set({ isLoadingUsage: false });
+    }
+  },
+
+  updateDailyUsage: (usage: DailyUsage) => {
+    set({ dailyUsage: usage });
   },
 
   // Error

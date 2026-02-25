@@ -7,6 +7,7 @@ import { getEmbeddingService } from "../services/embedding.service";
 import { getVectorService } from "../services/vector.service";
 import { getLLMService } from "../services/llm.service";
 import { getCacheService } from "../services/cache.service";
+import { dailyLimitService } from "../services/daily-limit.service";
 import { SourceCitation, JwtPayload } from "../types";
 
 export function setupWebSocket(io: SocketIOServer): void {
@@ -53,6 +54,17 @@ export function setupWebSocket(io: SocketIOServer): void {
       async (data: { query: string; conversationId?: string }) => {
         try {
           const { query, conversationId } = data;
+
+          // Check daily message limit
+          const { allowed, usage } = await dailyLimitService.canSendMessage(userId);
+          if (!allowed) {
+            socket.emit("query:error", {
+              error: `Daily message limit reached (${usage.limit} messages per day). Resets at ${new Date(usage.resetsAt).toLocaleTimeString()}.`,
+              code: "DAILY_LIMIT_REACHED",
+              usage,
+            });
+            return;
+          }
 
           const embeddingService = getEmbeddingService();
           const vectorService = getVectorService();
@@ -154,9 +166,13 @@ export function setupWebSocket(io: SocketIOServer): void {
                 }
               }
 
+              // Increment daily usage after successful response
+              const updatedUsage = await dailyLimitService.incrementUsage(userId);
+
               socket.emit("query:complete", { 
                 done: true,
                 messageId: assistantMessageId,
+                usage: updatedUsage,
               });
             },
             onError: (error: Error) => {
