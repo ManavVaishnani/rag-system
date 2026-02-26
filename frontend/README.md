@@ -1,73 +1,65 @@
-# React + TypeScript + Vite
+# RAG System — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-based frontend for the RAG system with real-time chat streaming, document management, and a dark-themed UI.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** · TypeScript 5.9 · Vite 7.3
+- **Tailwind CSS 4.1** — OKLCH color palette, dark-only theme
+- **shadcn/ui** — 21 pre-built components (Radix UI primitives)
+- **Zustand 5** — Lightweight state management (auth, chat, document stores)
+- **TanStack Query 5** — Server state, caching, and background refetching
+- **React Router 7** — Client-side routing with protected routes
+- **Socket.io Client** — Real-time WebSocket streaming
+- **React Hook Form + Zod 4** — Form validation
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev       # Start dev server on http://localhost:5173
+npm run build     # Production build
+npm run preview   # Preview production build
+npm run lint      # Run ESLint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Pages
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Route              | Page         | Description                        |
+| ------------------ | ------------ | ---------------------------------- |
+| `/`                | Landing      | Marketing landing page             |
+| `/login`           | Login        | Email/password sign in             |
+| `/register`        | Register     | New account creation               |
+| `/chat`            | Chat         | New conversation                   |
+| `/chat/:id`        | Chat         | Existing conversation with history |
+| `/documents`       | Documents    | Upload, list, manage documents     |
+| `/settings`        | Settings     | User preferences                   |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Architecture
+
 ```
+src/
+├── components/
+│   ├── ui/              # 21 shadcn/ui components
+│   ├── layout/          # AppLayout, AuthLayout, Header, Sidebar
+│   ├── chat/            # ChatInterface, MessageBubble, streaming, citations
+│   ├── documents/       # Upload zone, cards, list, viewer
+│   └── conversations/   # Sidebar conversation list
+├── pages/               # Route-level page components
+├── stores/              # Zustand stores (auth, chat, document)
+├── services/            # API service layer (axios-based)
+├── hooks/               # Custom hooks (useAuth, useChat, useDocuments, etc.)
+├── lib/                 # Axios client, Socket.io client, utilities
+└── types/               # Shared TypeScript types and Zod schemas
+```
+
+## Key Features
+
+- **Real-time Streaming** — Token-by-token response rendering with cursor animation
+- **Source Citations** — Expandable citations with content preview and relevance scores
+- **Document Upload** — Drag & drop, multi-file, progress tracking, file validation
+- **Conversation Management** — Create, rename, delete conversations from the sidebar
+- **Chat Attachments** — Upload documents directly from the chat input
+- **Responsive Layout** — Adaptive grid layouts (1 → 2 → 3 columns)
+- **Error Boundaries** — Graceful error handling with recovery UI
+- **Auto Token Refresh** — Seamless JWT refresh with request queuing
