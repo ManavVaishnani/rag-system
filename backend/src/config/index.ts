@@ -25,6 +25,11 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default("./uploads"),
   METRICS_ENABLED: z.string().default("true"),
   METRICS_PORT: z.string().default("9090"),
+  ENCRYPTION_KEY: z
+    .string()
+    .min(32, "ENCRYPTION_KEY must be at least 32 characters")
+    .default("default-dev-key-change-in-production-32chars!!"),
+  DAILY_CREDIT_LIMIT: z.string().default("100"),
 });
 
 const parseEnv = () => {
@@ -95,5 +100,11 @@ export const config = {
   metrics: {
     enabled: env.METRICS_ENABLED === "true",
     port: parseInt(env.METRICS_PORT, 10),
+  },
+  encryption: {
+    key: env.ENCRYPTION_KEY,
+  },
+  credits: {
+    dailyLimit: parseInt(env.DAILY_CREDIT_LIMIT, 10),
   },
 };

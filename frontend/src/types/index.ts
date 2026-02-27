@@ -4,3 +4,4 @@ export * from './chat.types';
 export * from './document.types';
 export * from './api.types';
 export * from './auth.validation';
+export * from './api-key.types';

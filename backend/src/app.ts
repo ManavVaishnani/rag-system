@@ -22,6 +22,7 @@ import queryRoutes from "./routes/query.routes";
 import conversationRoutes from "./routes/conversation.routes";
 import vectorRoutes from "./routes/vector.routes";
 import healthRoutes from "./routes/health.routes";
+import apiKeyRoutes from "./routes/api-key.routes";
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/query", queryRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/vectors", vectorRoutes);
+app.use("/api/user", apiKeyRoutes);
 
 // Apply general rate limiting to all other routes
 app.use("/api", apiRateLimiter);

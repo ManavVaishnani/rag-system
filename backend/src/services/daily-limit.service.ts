@@ -1,4 +1,5 @@
 import { getRedisClient } from "../config/redis";
+import { prisma } from "../config/database";
 import { logger } from "../utils/logger";
 
 const DAILY_MESSAGE_LIMIT = 25;
@@ -59,11 +60,25 @@ export const dailyLimitService = {
    * Check if the user can send a message. Returns the usage info.
    * Does NOT increment the counter.
    */
-  async canSendMessage(userId: string): Promise<{ allowed: boolean; usage: DailyUsage }> {
+  async canSendMessage(userId: string): Promise<{ allowed: boolean; usage: DailyUsage; hasByok: boolean }> {
+    // Check if user has an active BYOK key — bypasses credit limits
+    try {
+      const activeKey = await prisma.userApiKey.count({
+        where: { userId, provider: "gemini", isActive: true },
+      });
+      if (activeKey > 0) {
+        const usage = await this.getUsage(userId);
+        return { allowed: true, usage, hasByok: true };
+      }
+    } catch (error) {
+      logger.warn("Failed to check BYOK status, falling back to credits:", error);
+    }
+
     const usage = await this.getUsage(userId);
     return {
       allowed: usage.remaining > 0,
       usage,
+      hasByok: false,
     };
   },
 
